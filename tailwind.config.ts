@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,12 +62,21 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// LOOMERO Brand Colors
+				'loomero-hero': '#8F6A4D',
+				'loomero-accent': '#65604D', 
+				'loomero-text': '#383431',
+				'loomero-background': '#E2E2D6'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			fontFamily: {
+				'anta': ['Anta', 'sans-serif'],
+				'outfit': ['Outfit', 'sans-serif']
 			},
 			keyframes: {
 				'accordion-down': {
