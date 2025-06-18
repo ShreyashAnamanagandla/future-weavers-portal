@@ -12,6 +12,9 @@ import AuthPage from "./pages/AuthPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import MentorDashboard from "./pages/MentorDashboard";
 import InternDashboard from "./pages/InternDashboard";
+import ProjectsPage from "./pages/ProjectsPage";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
+import MilestoneProgressPage from "./pages/MilestoneProgressPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +50,24 @@ const App = () => (
               <AuthGuard requiredRole="intern">
                 <Header />
                 <InternDashboard />
+              </AuthGuard>
+            } />
+            <Route path="/projects" element={
+              <AuthGuard>
+                <Header />
+                <ProjectsPage />
+              </AuthGuard>
+            } />
+            <Route path="/projects/:id" element={
+              <AuthGuard>
+                <Header />
+                <ProjectDetailPage />
+              </AuthGuard>
+            } />
+            <Route path="/milestones/:id" element={
+              <AuthGuard>
+                <Header />
+                <MilestoneProgressPage />
               </AuthGuard>
             } />
             <Route path="*" element={<NotFound />} />

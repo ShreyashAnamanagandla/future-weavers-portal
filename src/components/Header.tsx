@@ -2,7 +2,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, FolderOpen } from 'lucide-react';
 
 const Header = () => {
   const { user, profile, signOut } = useAuth();
@@ -32,21 +32,32 @@ const Header = () => {
           </Badge>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <User className="h-4 w-4 text-loomero-text" />
-            <span className="text-loomero-text">{profile.full_name || profile.email}</span>
-          </div>
+        <nav className="flex items-center space-x-4">
           <Button
-            variant="outline"
-            size="sm"
-            onClick={signOut}
+            variant="ghost"
+            onClick={() => window.location.href = '/projects'}
             className="flex items-center space-x-2"
           >
-            <LogOut className="h-4 w-4" />
-            <span>Sign Out</span>
+            <FolderOpen className="h-4 w-4" />
+            <span>Projects</span>
           </Button>
-        </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <User className="h-4 w-4 text-loomero-text" />
+              <span className="text-loomero-text">{profile.full_name || profile.email}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={signOut}
+              className="flex items-center space-x-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </Button>
+          </div>
+        </nav>
       </div>
     </header>
   );

@@ -2,7 +2,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
-import { Users, BookOpen, Award, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, BookOpen, Award, FileText, Plus, FolderOpen } from "lucide-react";
 
 const AdminDashboard = () => {
   const { profile } = useAuth();
@@ -80,13 +81,19 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <h3 className="font-medium text-loomero-text">User Management</h3>
-                <p className="text-sm text-loomero-text/70">Create, edit, and manage user accounts and roles</p>
-                <Badge variant="secondary">Coming Soon</Badge>
+                <Button 
+                  onClick={() => window.location.href = '/projects'}
+                  className="w-full justify-start"
+                  variant="outline"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Manage Projects & Milestones
+                </Button>
+                <p className="text-sm text-loomero-text/70">Create and manage internship projects</p>
               </div>
               <div className="space-y-2">
-                <h3 className="font-medium text-loomero-text">Project Setup</h3>
-                <p className="text-sm text-loomero-text/70">Configure internship projects and milestones</p>
+                <h3 className="font-medium text-loomero-text">User Management</h3>
+                <p className="text-sm text-loomero-text/70">Create, edit, and manage user accounts and roles</p>
                 <Badge variant="secondary">Coming Soon</Badge>
               </div>
               <div className="space-y-2">
