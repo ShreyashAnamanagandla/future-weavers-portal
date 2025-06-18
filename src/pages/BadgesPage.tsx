@@ -23,14 +23,9 @@ interface UserBadge {
   id: string;
   awarded_at: string;
   badge_id: string;
-  user_id: string;
   badges: Badge;
   awarded_by_profile: {
     full_name: string;
-  };
-  user_profile?: {
-    full_name: string;
-    email: string;
   };
 }
 
