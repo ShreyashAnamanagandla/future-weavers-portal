@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, loading } = useAuth();
   const navigate = useNavigate();
 
   const [signInData, setSignInData] = useState({
@@ -26,14 +26,41 @@ const AuthPage = () => {
     role: 'intern' as 'admin' | 'mentor' | 'intern',
   });
 
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (!loading && user) {
+      console.log('User is authenticated, redirecting to home');
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
+
+  // Don't render the form if user is already authenticated or still loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-loomero-background flex items-center justify-center">
+        <div className="text-loomero-text font-anta text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return null; // Will redirect via useEffect
+  }
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signInData.email || !signInData.password) {
+      return;
+    }
+    
     setIsLoading(true);
+    console.log('Submitting sign in form');
 
     const { error } = await signIn(signInData.email, signInData.password);
     
     if (!error) {
-      navigate('/');
+      console.log('Sign in successful, will redirect');
+      // Navigation will happen via useEffect when user state updates
     }
     
     setIsLoading(false);
@@ -41,7 +68,12 @@ const AuthPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!signUpData.email || !signUpData.password || !signUpData.fullName) {
+      return;
+    }
+    
     setIsLoading(true);
+    console.log('Submitting sign up form');
 
     const { error } = await signUp(
       signUpData.email,
@@ -79,6 +111,7 @@ const AuthPage = () => {
                     value={signInData.email}
                     onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -89,6 +122,7 @@ const AuthPage = () => {
                     value={signInData.password}
                     onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
@@ -107,6 +141,7 @@ const AuthPage = () => {
                     value={signUpData.fullName}
                     onChange={(e) => setSignUpData(prev => ({ ...prev, fullName: e.target.value }))}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -117,6 +152,7 @@ const AuthPage = () => {
                     value={signUpData.email}
                     onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -127,6 +163,7 @@ const AuthPage = () => {
                     value={signUpData.password}
                     onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -136,6 +173,7 @@ const AuthPage = () => {
                     onValueChange={(value: 'admin' | 'mentor' | 'intern') => 
                       setSignUpData(prev => ({ ...prev, role: value }))
                     }
+                    disabled={isLoading}
                   >
                     <SelectTrigger>
                       <SelectValue />
