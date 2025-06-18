@@ -2,7 +2,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, User, FolderOpen } from 'lucide-react';
+import { LogOut, User, FolderOpen, Award } from 'lucide-react';
 
 const Header = () => {
   const { user, profile, signOut } = useAuth();
@@ -40,6 +40,15 @@ const Header = () => {
           >
             <FolderOpen className="h-4 w-4" />
             <span>Projects</span>
+          </Button>
+          
+          <Button
+            variant="ghost"
+            onClick={() => window.location.href = '/badges'}
+            className="flex items-center space-x-2"
+          >
+            <Award className="h-4 w-4" />
+            <span>Badges</span>
           </Button>
           
           <div className="flex items-center space-x-4">

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +15,7 @@ import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import MilestoneProgressPage from "./pages/MilestoneProgressPage";
 import NotFound from "./pages/NotFound";
+import BadgesPage from "./pages/BadgesPage";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +68,12 @@ const App = () => (
               <AuthGuard>
                 <Header />
                 <MilestoneProgressPage />
+              </AuthGuard>
+            } />
+            <Route path="/badges" element={
+              <AuthGuard>
+                <Header />
+                <BadgesPage />
               </AuthGuard>
             } />
             <Route path="*" element={<NotFound />} />
