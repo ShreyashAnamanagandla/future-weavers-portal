@@ -21,6 +21,7 @@ interface Badge {
 
 interface UserBadge {
   id: string;
+  user_id: string;
   awarded_at: string;
   badge_id: string;
   badges: Badge;
