@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +17,7 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import MilestoneProgressPage from "./pages/MilestoneProgressPage";
 import NotFound from "./pages/NotFound";
 import BadgesPage from "./pages/BadgesPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +76,12 @@ const App = () => (
               <AuthGuard>
                 <Header />
                 <BadgesPage />
+              </AuthGuard>
+            } />
+            <Route path="/analytics" element={
+              <AuthGuard>
+                <Header />
+                <AnalyticsPage />
               </AuthGuard>
             } />
             <Route path="*" element={<NotFound />} />

@@ -2,7 +2,7 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { LogOut, User, FolderOpen, Award } from 'lucide-react';
+import { LogOut, User, FolderOpen, Award, BarChart3 } from 'lucide-react';
 
 const Header = () => {
   const { user, profile, signOut } = useAuth();
@@ -50,6 +50,17 @@ const Header = () => {
             <Award className="h-4 w-4" />
             <span>Badges</span>
           </Button>
+
+          {(profile.role === 'admin' || profile.role === 'mentor') && (
+            <Button
+              variant="ghost"
+              onClick={() => window.location.href = '/analytics'}
+              className="flex items-center space-x-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              <span>Analytics</span>
+            </Button>
+          )}
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
