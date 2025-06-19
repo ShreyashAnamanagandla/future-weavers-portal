@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          email: string
+          id: string
+          is_used: boolean | null
+          role: Database["public"]["Enums"]["user_role"]
+          used_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          email: string
+          id?: string
+          is_used?: boolean | null
+          role: Database["public"]["Enums"]["user_role"]
+          used_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          email?: string
+          id?: string
+          is_used?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"]
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           badge_type: Database["public"]["Enums"]["badge_type"]
@@ -375,6 +416,17 @@ export type Database = {
           _role: Database["public"]["Enums"]["user_role"]
         }
         Returns: boolean
+      }
+      use_access_code: {
+        Args: { _code_id: string }
+        Returns: boolean
+      }
+      verify_access_code: {
+        Args: { _email: string; _code: string }
+        Returns: {
+          role: Database["public"]["Enums"]["user_role"]
+          code_id: string
+        }[]
       }
     }
     Enums: {

@@ -17,8 +17,8 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string, role?: 'admin' | 'mentor' | 'intern') => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
+  verifyAccessCode: (code: string) => Promise<{ error: any; success?: boolean }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
 }
@@ -78,63 +78,111 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
-    console.log('Attempting sign in for:', email);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+  const signInWithGoogle = async () => {
+    console.log('Attempting Google sign in');
+    const redirectUrl = `${window.location.origin}/auth`;
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+      },
     });
 
     if (error) {
-      console.error('Sign in error:', error);
+      console.error('Google sign in error:', error);
       toast({
         title: "Sign In Failed",
         description: error.message,
         variant: "destructive",
-      });
-    } else {
-      console.log('Sign in successful');
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
       });
     }
 
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role: 'admin' | 'mentor' | 'intern' = 'intern') => {
-    console.log('Attempting sign up for:', email);
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-          role: role,
-        },
-      },
-    });
-
-    if (error) {
-      console.error('Sign up error:', error);
+  const verifyAccessCode = async (code: string) => {
+    if (!user?.email) {
+      const error = new Error('No authenticated user found');
       toast({
-        title: "Sign Up Failed",
-        description: error.message,
+        title: "Verification Failed",
+        description: "Please sign in with Google first",
         variant: "destructive",
       });
-    } else {
-      console.log('Sign up successful');
-      toast({
-        title: "Account Created",
-        description: "Please check your email to verify your account.",
-      });
+      return { error };
     }
 
-    return { error };
+    console.log('Verifying access code for:', user.email);
+    
+    try {
+      // Verify the access code
+      const { data: verificationResult, error: verifyError } = await supabase.rpc(
+        'verify_access_code',
+        { _email: user.email, _code: code }
+      );
+
+      if (verifyError || !verificationResult || verificationResult.length === 0) {
+        console.error('Access code verification failed:', verifyError);
+        toast({
+          title: "Invalid Access Code",
+          description: "The access code is invalid or has already been used",
+          variant: "destructive",
+        });
+        return { error: verifyError || new Error('Invalid access code') };
+      }
+
+      const { role, code_id } = verificationResult[0];
+
+      // Mark the code as used
+      const { error: useError } = await supabase.rpc('use_access_code', { _code_id: code_id });
+      
+      if (useError) {
+        console.error('Error marking code as used:', useError);
+        return { error: useError };
+      }
+
+      // Update or create the user profile with the role
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+          role: role,
+          avatar_url: user.user_metadata?.avatar_url || null,
+        });
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+        return { error: profileError };
+      }
+
+      // Fetch the updated profile
+      const { data: updatedProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (!fetchError && updatedProfile) {
+        setProfile(updatedProfile);
+      }
+
+      toast({
+        title: "Access Verified",
+        description: `Welcome! You have been assigned the ${role} role.`,
+      });
+
+      return { error: null, success: true };
+    } catch (err) {
+      console.error('Access code verification error:', err);
+      toast({
+        title: "Verification Failed",
+        description: "An error occurred while verifying your access code",
+        variant: "destructive",
+      });
+      return { error: err };
+    }
   };
 
   const signOut = async () => {
@@ -175,8 +223,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profile,
       session,
       loading,
-      signIn,
-      signUp,
+      signInWithGoogle,
+      verifyAccessCode,
       signOut,
       updateProfile,
     }}>
