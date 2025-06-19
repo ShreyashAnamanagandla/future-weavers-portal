@@ -17,6 +17,7 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   loading: boolean;
+  authStatus: 'pending' | 'approved' | 'new' | null;
   signInWithGoogle: () => Promise<{ error: any }>;
   verifyAccessCode: (code: string) => Promise<{ error: any; success?: boolean }>;
   signOut: () => Promise<void>;
@@ -30,37 +31,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authStatus, setAuthStatus] = useState<'pending' | 'approved' | 'new' | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Use setTimeout to prevent deadlock when fetching profile
         if (session?.user) {
-          setTimeout(async () => {
-            try {
-              const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-              
-              if (error) {
-                console.error('Error fetching profile:', error);
-              } else {
-                setProfile(profile);
-              }
-            } catch (err) {
-              console.error('Profile fetch error:', err);
-            }
-          }, 0);
+          // Check user status in our custom tables
+          await checkUserStatus(session.user.email!);
         } else {
           setProfile(null);
+          setAuthStatus(null);
         }
         
         setLoading(false);
@@ -72,11 +59,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
+      
+      if (session?.user) {
+        checkUserStatus(session.user.email!);
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkUserStatus = async (email: string) => {
+    try {
+      // First check if user is approved
+      const { data: approvedUser, error: approvedError } = await supabase
+        .from('approved_users')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (approvedUser && !approvedError) {
+        setAuthStatus('approved');
+        return;
+      }
+
+      // Then check if user is pending
+      const { data: pendingUser, error: pendingError } = await supabase
+        .from('pending_users')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (pendingUser && !pendingError) {
+        setAuthStatus('pending');
+        return;
+      }
+
+      // If not found in either table, they're new
+      setAuthStatus('new');
+    } catch (err) {
+      console.error('Error checking user status:', err);
+      setAuthStatus('new');
+    }
+  };
 
   const signInWithGoogle = async () => {
     console.log('Attempting Google sign in');
@@ -115,39 +141,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Verifying access code for:', user.email);
     
     try {
-      // Verify the access code
+      // Verify the access code using the new function
       const { data: verificationResult, error: verifyError } = await supabase.rpc(
-        'verify_access_code',
-        { _email: user.email, _code: code }
+        'verify_user_login',
+        { _email: user.email, _access_code: code }
       );
 
       if (verifyError || !verificationResult || verificationResult.length === 0) {
         console.error('Access code verification failed:', verifyError);
         toast({
           title: "Invalid Access Code",
-          description: "The access code is invalid or has already been used",
+          description: "The access code is invalid or doesn't match your account",
           variant: "destructive",
         });
         return { error: verifyError || new Error('Invalid access code') };
       }
 
-      const { role, code_id } = verificationResult[0];
+      const { role, user_id, full_name } = verificationResult[0];
 
-      // Mark the code as used
-      const { error: useError } = await supabase.rpc('use_access_code', { _code_id: code_id });
-      
-      if (useError) {
-        console.error('Error marking code as used:', useError);
-        return { error: useError };
-      }
+      // Update last login
+      await supabase.rpc('update_last_login', { _email: user.email });
 
-      // Update or create the user profile with the role
+      // Create or update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           email: user.email,
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+          full_name: full_name || user.user_metadata?.full_name || user.user_metadata?.name || null,
           role: role,
           avatar_url: user.user_metadata?.avatar_url || null,
         });
@@ -166,11 +187,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!fetchError && updatedProfile) {
         setProfile(updatedProfile);
+        setAuthStatus('approved');
       }
 
       toast({
-        title: "Access Verified",
-        description: `Welcome! You have been assigned the ${role} role.`,
+        title: "Welcome Back!",
+        description: `Successfully logged in as ${role}.`,
       });
 
       return { error: null, success: true };
@@ -191,6 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setProfile(null);
     setSession(null);
+    setAuthStatus(null);
     
     toast({
       title: "Signed Out",
@@ -223,6 +246,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profile,
       session,
       loading,
+      authStatus,
       signInWithGoogle,
       verifyAccessCode,
       signOut,

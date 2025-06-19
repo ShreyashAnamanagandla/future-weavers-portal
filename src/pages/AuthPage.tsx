@@ -2,17 +2,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
 
 const AuthPage = () => {
   const [accessCode, setAccessCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [showCodeInput, setShowCodeInput] = useState(false);
-  const { signInWithGoogle, verifyAccessCode, user, profile, loading } = useAuth();
+  const [isSubmittingPending, setIsSubmittingPending] = useState(false);
+  const { signInWithGoogle, verifyAccessCode, user, profile, loading, authStatus } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if user is fully authenticated with profile
@@ -22,13 +23,6 @@ const AuthPage = () => {
       navigate('/');
     }
   }, [user, profile, loading, navigate]);
-
-  // Show code input if user is signed in but doesn't have a profile yet
-  useEffect(() => {
-    if (user && !profile) {
-      setShowCodeInput(true);
-    }
-  }, [user, profile]);
 
   // Don't render if still loading
   if (loading) {
@@ -47,6 +41,33 @@ const AuthPage = () => {
   const handleGoogleSignIn = async () => {
     console.log('Initiating Google sign in');
     await signInWithGoogle();
+  };
+
+  const handleSubmitPendingRequest = async () => {
+    if (!user?.email) return;
+    
+    setIsSubmittingPending(true);
+    
+    try {
+      const { error } = await supabase
+        .from('pending_users')
+        .insert({
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+          google_id: user.id,
+        });
+
+      if (error) {
+        console.error('Error submitting pending request:', error);
+      } else {
+        // Refresh auth status to show pending state
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Error submitting pending request:', err);
+    }
+    
+    setIsSubmittingPending(false);
   };
 
   const handleVerifyCode = async (e: React.FormEvent) => {
@@ -77,7 +98,9 @@ const AuthPage = () => {
           </CardTitle>
           <CardDescription>
             {!user && "Sign in with Google to get started"}
-            {user && !profile && "Enter your access code to complete setup"}
+            {user && authStatus === 'new' && "Complete your account setup"}
+            {user && authStatus === 'pending' && "Your account is pending approval"}
+            {user && authStatus === 'approved' && "Enter your access code to continue"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -108,22 +131,55 @@ const AuthPage = () => {
                 </svg>
                 Continue with Google
               </Button>
+            </div>
+          )}
 
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          {user && authStatus === 'new' && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="text-sm text-green-700">Signed in as {user.email}</span>
+              </div>
+              
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-start space-x-3">
                   <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Test Access Codes:</p>
-                    <p>Admin: <code className="bg-blue-100 px-1 rounded">123456</code> (admin@example.com)</p>
-                    <p>Mentor: <code className="bg-blue-100 px-1 rounded">789012</code> (mentor@example.com)</p>
-                    <p>Intern: <code className="bg-blue-100 px-1 rounded">345678</code> (intern@example.com)</p>
+                    <p className="font-medium mb-2">Account Setup Required</p>
+                    <p className="mb-3">Your account needs approval before you can access the platform. Click below to submit your request.</p>
+                    <Button 
+                      onClick={handleSubmitPendingRequest}
+                      disabled={isSubmittingPending}
+                      size="sm"
+                    >
+                      {isSubmittingPending ? 'Submitting...' : 'Request Access'}
+                    </Button>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {user && !profile && showCodeInput && (
+          {user && authStatus === 'pending' && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2 mb-4">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="text-sm text-green-700">Signed in as {user.email}</span>
+              </div>
+              
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div className="flex items-start space-x-3">
+                  <Clock className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <p className="font-medium mb-1">Account Pending Approval</p>
+                    <p>Your account is pending approval. You will receive an email once approved with your access code.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {user && authStatus === 'approved' && (
             <form onSubmit={handleVerifyCode} className="space-y-4">
               <div className="flex items-center space-x-2 mb-4">
                 <CheckCircle className="h-5 w-5 text-green-600" />
@@ -144,7 +200,7 @@ const AuthPage = () => {
                   className="text-center text-lg tracking-widest"
                 />
                 <p className="text-xs text-gray-500">
-                  Contact your administrator for an access code
+                  Enter the 6-digit code from your approval email
                 </p>
               </div>
               

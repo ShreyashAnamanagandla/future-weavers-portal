@@ -50,6 +50,50 @@ export type Database = {
           },
         ]
       }
+      approved_users: {
+        Row: {
+          access_code: string
+          approved_at: string | null
+          approved_by: string | null
+          email: string
+          full_name: string | null
+          google_id: string | null
+          id: string
+          last_login: string | null
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          access_code: string
+          approved_at?: string | null
+          approved_by?: string | null
+          email: string
+          full_name?: string | null
+          google_id?: string | null
+          id?: string
+          last_login?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          access_code?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          email?: string
+          full_name?: string | null
+          google_id?: string | null
+          id?: string
+          last_login?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approved_users_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           badge_type: Database["public"]["Enums"]["badge_type"]
@@ -178,6 +222,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pending_users: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          google_id: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          google_id?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          google_id?: string | null
+          id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -410,12 +478,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_user: {
+        Args: {
+          _email: string
+          _role: Database["public"]["Enums"]["user_role"]
+          _approver_id: string
+        }
+        Returns: {
+          access_code: string
+          user_name: string
+        }[]
+      }
+      generate_access_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _user_id: string
           _role: Database["public"]["Enums"]["user_role"]
         }
         Returns: boolean
+      }
+      update_last_login: {
+        Args: { _email: string }
+        Returns: undefined
       }
       use_access_code: {
         Args: { _code_id: string }
@@ -426,6 +513,14 @@ export type Database = {
         Returns: {
           role: Database["public"]["Enums"]["user_role"]
           code_id: string
+        }[]
+      }
+      verify_user_login: {
+        Args: { _email: string; _access_code: string }
+        Returns: {
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+          full_name: string
         }[]
       }
     }

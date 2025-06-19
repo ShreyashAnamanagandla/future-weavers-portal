@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, FolderOpen, Award, BarChart3 } from 'lucide-react';
-import AccessCodeManager from '@/components/AccessCodeManager';
+import PendingUsersManager from '@/components/PendingUsersManager';
 
 const AdminDashboard = () => {
   return (
@@ -64,7 +64,7 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <AccessCodeManager />
+        <PendingUsersManager />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
@@ -94,7 +94,7 @@ const AdminDashboard = () => {
                 <Badge variant="default">Healthy</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span>Access Codes</span>
+                <span>User Approval System</span>
                 <Badge variant="default">Operational</Badge>
               </div>
             </CardContent>
