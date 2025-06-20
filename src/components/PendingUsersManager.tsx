@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,11 +17,13 @@ interface PendingUser {
   created_at: string;
 }
 
+type UserRole = 'admin' | 'mentor' | 'intern';
+
 const PendingUsersManager = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, UserRole>>({});
 
   const { data: pendingUsers, isLoading } = useQuery({
     queryKey: ['pending-users'],
@@ -38,7 +39,7 @@ const PendingUsersManager = () => {
   });
 
   const approveMutation = useMutation({
-    mutationFn: async ({ email, role }: { email: string; role: string }) => {
+    mutationFn: async ({ email, role }: { email: string; role: UserRole }) => {
       const { data, error } = await supabase.rpc('approve_user', {
         _email: email,
         _role: role,
@@ -106,7 +107,7 @@ const PendingUsersManager = () => {
   const handleRoleChange = (email: string, role: string) => {
     setSelectedRoles(prev => ({
       ...prev,
-      [email]: role
+      [email]: role as UserRole
     }));
   };
 
