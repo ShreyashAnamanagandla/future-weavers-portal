@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const AuthPage = () => {
   const [accessCode, setAccessCode] = useState('');
@@ -15,6 +16,7 @@ const AuthPage = () => {
   const [isSubmittingPending, setIsSubmittingPending] = useState(false);
   const { signInWithGoogle, verifyAccessCode, user, profile, loading, authStatus } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Redirect if user is fully authenticated with profile
   useEffect(() => {
@@ -44,9 +46,17 @@ const AuthPage = () => {
   };
 
   const handleSubmitPendingRequest = async () => {
-    if (!user?.email) return;
+    if (!user?.email) {
+      toast({
+        title: "Error",
+        description: "Please sign in with Google first",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSubmittingPending(true);
+    console.log('Submitting pending request for:', user.email);
     
     try {
       const { error } = await supabase
@@ -59,12 +69,29 @@ const AuthPage = () => {
 
       if (error) {
         console.error('Error submitting pending request:', error);
+        toast({
+          title: "Error",
+          description: "Failed to submit access request. Please try again.",
+          variant: "destructive",
+        });
       } else {
-        // Force a refresh of auth status
-        window.location.reload();
+        console.log('Successfully submitted pending request');
+        toast({
+          title: "Request Submitted",
+          description: "Your access request has been submitted successfully.",
+        });
+        // Force a refresh of auth status by reloading
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       }
     } catch (err) {
       console.error('Error submitting pending request:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     }
     
     setIsSubmittingPending(false);
@@ -88,6 +115,9 @@ const AuthPage = () => {
     
     setIsVerifying(false);
   };
+
+  // Debug logging
+  console.log('AuthPage state:', { user: !!user, authStatus, loading });
 
   return (
     <div className="min-h-screen bg-loomero-background flex items-center justify-center p-6">
@@ -143,7 +173,7 @@ const AuthPage = () => {
               
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-start space-x-3">
-                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-blue-800">
                     <p className="font-medium mb-2">Account Setup Required</p>
                     <p className="mb-3">Your account needs approval before you can access the platform. Click below to submit your request.</p>
@@ -169,7 +199,7 @@ const AuthPage = () => {
               
               <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                 <div className="flex items-start space-x-3">
-                  <Clock className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <Clock className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-yellow-800">
                     <p className="font-medium mb-1">Account Pending Approval</p>
                     <p>Your account is pending approval. You will receive an email once approved with your access code.</p>

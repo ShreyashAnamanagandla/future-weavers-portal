@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,9 +34,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
@@ -45,19 +48,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           // Check user status in our custom tables
           setTimeout(() => {
-            checkUserStatus(session.user.email!);
+            if (mounted) {
+              checkUserStatus(session.user.email!);
+            }
           }, 0);
         } else {
           setProfile(null);
           setAuthStatus(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
       console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
@@ -69,10 +75,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkUserStatus = async (email: string) => {
+    console.log('Checking user status for:', email);
     try {
       // First check if user is approved
       const { data: approvedUser, error: approvedError } = await supabase
@@ -81,7 +91,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('email', email)
         .maybeSingle();
 
+      console.log('Approved user check:', { approvedUser, approvedError });
+
       if (approvedUser && !approvedError) {
+        console.log('User is approved');
         setAuthStatus('approved');
         setLoading(false);
         return;
@@ -94,13 +107,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('email', email)
         .maybeSingle();
 
+      console.log('Pending user check:', { pendingUser, pendingError });
+
       if (pendingUser && !pendingError) {
+        console.log('User is pending');
         setAuthStatus('pending');
         setLoading(false);
         return;
       }
 
       // If not found in either table, they're new
+      console.log('User is new');
       setAuthStatus('new');
       setLoading(false);
     } catch (err) {
