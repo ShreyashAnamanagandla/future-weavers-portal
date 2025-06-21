@@ -60,7 +60,7 @@ const AuthPage = () => {
       if (error) {
         console.error('Error submitting pending request:', error);
       } else {
-        // Refresh auth status to show pending state
+        // Force a refresh of auth status
         window.location.reload();
       }
     } catch (err) {

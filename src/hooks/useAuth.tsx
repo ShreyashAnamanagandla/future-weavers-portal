@@ -44,7 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           // Check user status in our custom tables
-          await checkUserStatus(session.user.email!);
+          setTimeout(() => {
+            checkUserStatus(session.user.email!);
+          }, 0);
         } else {
           setProfile(null);
           setAuthStatus(null);
@@ -81,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (approvedUser && !approvedError) {
         setAuthStatus('approved');
+        setLoading(false);
         return;
       }
 
@@ -93,14 +96,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (pendingUser && !pendingError) {
         setAuthStatus('pending');
+        setLoading(false);
         return;
       }
 
       // If not found in either table, they're new
       setAuthStatus('new');
+      setLoading(false);
     } catch (err) {
       console.error('Error checking user status:', err);
       setAuthStatus('new');
+      setLoading(false);
     }
   };
 
