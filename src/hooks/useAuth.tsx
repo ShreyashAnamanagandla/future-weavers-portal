@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
+        if (session?.user?.email) {
           // Check user status in our custom tables
           setTimeout(() => {
             if (mounted) {
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       
-      if (session?.user) {
+      if (session?.user?.email) {
         checkUserStatus(session.user.email!);
       } else {
         setLoading(false);
@@ -83,6 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkUserStatus = async (email: string) => {
     console.log('Checking user status for:', email);
+    setLoading(true);
+    
     try {
       // First check if user is approved
       const { data: approvedUser, error: approvedError } = await supabase

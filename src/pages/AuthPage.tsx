@@ -42,13 +42,30 @@ const AuthPage = () => {
 
   const handleGoogleSignIn = async () => {
     console.log('Initiating Google sign in');
-    await signInWithGoogle();
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        console.error('Google sign in failed:', error);
+        toast({
+          title: "Sign In Failed",
+          description: "Failed to sign in with Google. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected error during sign in:', err);
+      toast({
+        title: "Sign In Failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmitPendingRequest = async () => {
     if (!user?.email) {
       toast({
-        title: "Error",
+        title: "Authentication Required",
         description: "Please sign in with Google first",
         variant: "destructive",
       });
@@ -59,7 +76,29 @@ const AuthPage = () => {
     console.log('Submitting pending request for:', user.email);
     
     try {
-      const { error } = await supabase
+      // Check if user is already in pending_users table
+      const { data: existingPending, error: checkError } = await supabase
+        .from('pending_users')
+        .select('id')
+        .eq('email', user.email)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking existing pending user:', checkError);
+        throw checkError;
+      }
+
+      if (existingPending) {
+        toast({
+          title: "Already Submitted",
+          description: "Your access request has already been submitted and is pending approval.",
+        });
+        setIsSubmittingPending(false);
+        return;
+      }
+
+      // Insert new pending user
+      const { error: insertError } = await supabase
         .from('pending_users')
         .insert({
           email: user.email,
@@ -67,29 +106,27 @@ const AuthPage = () => {
           google_id: user.id,
         });
 
-      if (error) {
-        console.error('Error submitting pending request:', error);
-        toast({
-          title: "Error",
-          description: "Failed to submit access request. Please try again.",
-          variant: "destructive",
-        });
-      } else {
-        console.log('Successfully submitted pending request');
-        toast({
-          title: "Request Submitted",
-          description: "Your access request has been submitted successfully.",
-        });
-        // Force a refresh of auth status by reloading
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+      if (insertError) {
+        console.error('Error inserting pending user:', insertError);
+        throw insertError;
       }
-    } catch (err) {
+
+      console.log('Successfully submitted pending request');
+      toast({
+        title: "Request Submitted",
+        description: "Your access request has been submitted successfully. You will receive an email once approved.",
+      });
+
+      // Refresh auth status to show pending state
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (err: any) {
       console.error('Error submitting pending request:', err);
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Submission Failed",
+        description: err.message || "Failed to submit access request. Please try again.",
         variant: "destructive",
       });
     }
@@ -117,7 +154,13 @@ const AuthPage = () => {
   };
 
   // Debug logging
-  console.log('AuthPage state:', { user: !!user, authStatus, loading });
+  console.log('AuthPage state:', { 
+    user: !!user, 
+    userEmail: user?.email,
+    authStatus, 
+    loading,
+    userMetadata: user?.user_metadata
+  });
 
   return (
     <div className="min-h-screen bg-loomero-background flex items-center justify-center p-6">
