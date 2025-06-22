@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Users, Mail, Calendar } from 'lucide-react';
+import { Users, Mail, Calendar, RefreshCw } from 'lucide-react';
 
 interface PendingUser {
   id: string;
@@ -25,31 +26,44 @@ const PendingUsersManager = () => {
   const queryClient = useQueryClient();
   const [selectedRoles, setSelectedRoles] = useState<Record<string, UserRole>>({});
 
-  const { data: pendingUsers, isLoading } = useQuery({
+  const { data: pendingUsers, isLoading, refetch } = useQuery({
     queryKey: ['pending-users'],
     queryFn: async () => {
+      console.log('PendingUsersManager: Fetching pending users');
       const { data, error } = await supabase
         .from('pending_users')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('PendingUsersManager: Error fetching pending users:', error);
+        throw error;
+      }
+      
+      console.log('PendingUsersManager: Fetched pending users:', data);
       return data as PendingUser[];
     },
   });
 
   const approveMutation = useMutation({
     mutationFn: async ({ email, role }: { email: string; role: UserRole }) => {
+      console.log('PendingUsersManager: Approving user:', { email, role });
       const { data, error } = await supabase.rpc('approve_user', {
         _email: email,
         _role: role,
         _approver_id: user?.id
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('PendingUsersManager: Error approving user:', error);
+        throw error;
+      }
+      
+      console.log('PendingUsersManager: User approved successfully:', data);
       return data[0];
     },
     onSuccess: async (data, variables) => {
+      console.log('PendingUsersManager: Approval successful, sending email');
       toast({
         title: "User Approved",
         description: `${variables.email} has been approved with access code: ${data.access_code}`,
@@ -57,7 +71,7 @@ const PendingUsersManager = () => {
       
       // Send approval email
       try {
-        await supabase.functions.invoke('send-approval-email', {
+        const { error: emailError } = await supabase.functions.invoke('send-approval-email', {
           body: {
             email: variables.email,
             userName: data.user_name || variables.email,
@@ -66,12 +80,22 @@ const PendingUsersManager = () => {
           }
         });
         
-        toast({
-          title: "Email Sent",
-          description: "Approval email sent successfully",
-        });
+        if (emailError) {
+          console.error('PendingUsersManager: Email sending failed:', emailError);
+          toast({
+            title: "Email Failed",
+            description: "User approved but email sending failed. Access code: " + data.access_code,
+            variant: "destructive",
+          });
+        } else {
+          console.log('PendingUsersManager: Approval email sent successfully');
+          toast({
+            title: "Email Sent",
+            description: "Approval email sent successfully",
+          });
+        }
       } catch (emailError) {
-        console.error('Failed to send email:', emailError);
+        console.error('PendingUsersManager: Failed to send email:', emailError);
         toast({
           title: "Email Failed",
           description: "User approved but email sending failed. Access code: " + data.access_code,
@@ -79,9 +103,11 @@ const PendingUsersManager = () => {
         });
       }
       
+      // Refresh the pending users list
       queryClient.invalidateQueries({ queryKey: ['pending-users'] });
     },
     onError: (error) => {
+      console.error('PendingUsersManager: Approval failed:', error);
       toast({
         title: "Approval Failed",
         description: error.message,
@@ -92,6 +118,8 @@ const PendingUsersManager = () => {
 
   const handleApprove = (email: string) => {
     const role = selectedRoles[email];
+    console.log('PendingUsersManager: Handling approve for:', { email, role });
+    
     if (!role) {
       toast({
         title: "Role Required",
@@ -105,10 +133,16 @@ const PendingUsersManager = () => {
   };
 
   const handleRoleChange = (email: string, role: string) => {
+    console.log('PendingUsersManager: Role changed for:', { email, role });
     setSelectedRoles(prev => ({
       ...prev,
       [email]: role as UserRole
     }));
+  };
+
+  const handleRefresh = () => {
+    console.log('PendingUsersManager: Manually refreshing pending users');
+    refetch();
   };
 
   if (isLoading) {
@@ -128,10 +162,21 @@ const PendingUsersManager = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Users className="h-5 w-5" />
-          <span>Pending Users</span>
-          <Badge variant="secondary">{pendingUsers?.length || 0}</Badge>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Users className="h-5 w-5" />
+            <span>Pending Users</span>
+            <Badge variant="secondary">{pendingUsers?.length || 0}</Badge>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Refresh</span>
+          </Button>
         </CardTitle>
         <CardDescription>
           Approve new users and assign their roles
@@ -142,6 +187,14 @@ const PendingUsersManager = () => {
           <div className="text-center py-8 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No pending users found</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              className="mt-4"
+            >
+              Refresh List
+            </Button>
           </div>
         ) : (
           <Table>

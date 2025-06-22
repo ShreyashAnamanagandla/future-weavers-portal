@@ -20,14 +20,23 @@ const AuthPage = () => {
 
   // Redirect if user is fully authenticated with profile
   useEffect(() => {
+    console.log('AuthPage useEffect - checking auth state:', { 
+      loading, 
+      user: !!user, 
+      userEmail: user?.email, 
+      profile: !!profile, 
+      authStatus 
+    });
+    
     if (!loading && user && profile) {
       console.log('User is fully authenticated, redirecting to home');
       navigate('/');
     }
-  }, [user, profile, loading, navigate]);
+  }, [user, profile, loading, navigate, authStatus]);
 
   // Don't render if still loading
   if (loading) {
+    console.log('AuthPage: Still loading...');
     return (
       <div className="min-h-screen bg-loomero-background flex items-center justify-center">
         <div className="text-loomero-text font-anta text-xl">Loading...</div>
@@ -37,11 +46,12 @@ const AuthPage = () => {
 
   // Don't render if user is fully authenticated
   if (user && profile) {
+    console.log('AuthPage: User fully authenticated, returning null');
     return null;
   }
 
   const handleGoogleSignIn = async () => {
-    console.log('Initiating Google sign in');
+    console.log('AuthPage: Initiating Google sign in');
     try {
       const { error } = await signInWithGoogle();
       if (error) {
@@ -51,6 +61,8 @@ const AuthPage = () => {
           description: "Failed to sign in with Google. Please try again.",
           variant: "destructive",
         });
+      } else {
+        console.log('Google sign in initiated successfully');
       }
     } catch (err) {
       console.error('Unexpected error during sign in:', err);
@@ -63,8 +75,11 @@ const AuthPage = () => {
   };
 
   const handleSubmitPendingRequest = async () => {
+    console.log('AuthPage: Starting pending request submission');
+    
     // Authentication guard
     if (!user?.email) {
+      console.error('No authenticated user found');
       toast({
         title: "Authentication Required",
         description: "Please sign in with Google first",
@@ -74,17 +89,22 @@ const AuthPage = () => {
     }
     
     setIsSubmittingPending(true);
-    console.log('Submitting pending request for:', user.email);
+    console.log('AuthPage: Submitting pending request for:', user.email);
     
     try {
       // Check if user is already in pending_users table
+      console.log('AuthPage: Checking for existing pending user');
       const { data: existingPending, error: checkError } = await supabase
         .from('pending_users')
-        .select('id')
+        .select('id, email')
         .eq('email', user.email)
         .maybeSingle();
 
-      console.log('Existing pending check:', { existingPending, checkError });
+      console.log('AuthPage: Existing pending check result:', { 
+        existingPending, 
+        checkError,
+        userEmail: user.email 
+      });
 
       if (checkError) {
         console.error('Error checking existing pending user:', checkError);
@@ -97,6 +117,7 @@ const AuthPage = () => {
       }
 
       if (existingPending) {
+        console.log('AuthPage: User already has pending request');
         toast({
           title: "Already Submitted",
           description: "You've already requested access. Your request is pending approval.",
@@ -104,19 +125,21 @@ const AuthPage = () => {
         return;
       }
 
-      // Insert new pending user with minimal data to avoid RLS issues
+      // Insert new pending user with minimal data
       const insertData = {
         email: user.email,
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
       };
 
-      console.log('Inserting pending user:', insertData);
+      console.log('AuthPage: Inserting pending user with data:', insertData);
 
       const { data: insertedData, error: insertError } = await supabase
         .from('pending_users')
         .insert(insertData)
-        .select()
+        .select('id, email, full_name, created_at')
         .single();
+
+      console.log('AuthPage: Insert result:', { insertedData, insertError });
 
       if (insertError) {
         console.error('Error inserting pending user:', insertError);
@@ -128,7 +151,7 @@ const AuthPage = () => {
         return;
       }
 
-      console.log('Successfully inserted pending user:', insertedData);
+      console.log('AuthPage: Successfully inserted pending user:', insertedData);
       
       toast({
         title: "Request Submitted",
@@ -136,15 +159,16 @@ const AuthPage = () => {
       });
 
       // Refresh auth status to show pending state
+      console.log('AuthPage: Refreshing page to update auth status');
       setTimeout(() => {
         window.location.reload();
       }, 1500);
 
-    } catch (err: any) {
-      console.error('Error submitting pending request:', err);
+    } catch (err) {
+      console.error('AuthPage: Unexpected error submitting pending request:', err);
       toast({
         title: "Submission Failed",
-        description: err.message || "Failed to submit access request. Please try again.",
+        description: err instanceof Error ? err.message : "Failed to submit access request. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -155,29 +179,33 @@ const AuthPage = () => {
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accessCode.trim()) {
+      console.log('AuthPage: No access code provided');
       return;
     }
     
     setIsVerifying(true);
-    console.log('Verifying access code');
+    console.log('AuthPage: Verifying access code');
 
     const { error, success } = await verifyAccessCode(accessCode.trim());
     
     if (success) {
-      console.log('Access code verified successfully');
+      console.log('AuthPage: Access code verified successfully');
       // Navigation will happen via useEffect when profile updates
+    } else {
+      console.error('AuthPage: Access code verification failed:', error);
     }
     
     setIsVerifying(false);
   };
 
-  // Debug logging
-  console.log('AuthPage state:', { 
+  // Debug logging for current state
+  console.log('AuthPage render state:', { 
     user: !!user, 
     userEmail: user?.email,
     authStatus, 
     loading,
-    userMetadata: user?.user_metadata
+    userMetadata: user?.user_metadata,
+    profile: !!profile
   });
 
   return (
