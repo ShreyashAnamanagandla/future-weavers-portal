@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -87,7 +88,12 @@ const AuthPage = () => {
 
       if (checkError) {
         console.error('Error checking existing pending user:', checkError);
-        throw new Error(`Database error: ${checkError.message}`);
+        toast({
+          title: "Database Error",
+          description: `Error checking existing request: ${checkError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
 
       if (existingPending) {
@@ -98,11 +104,10 @@ const AuthPage = () => {
         return;
       }
 
-      // Insert new pending user
+      // Insert new pending user with minimal data to avoid RLS issues
       const insertData = {
         email: user.email,
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-        google_id: user.id,
       };
 
       console.log('Inserting pending user:', insertData);
@@ -115,7 +120,12 @@ const AuthPage = () => {
 
       if (insertError) {
         console.error('Error inserting pending user:', insertError);
-        throw new Error(`Failed to submit request: ${insertError.message}`);
+        toast({
+          title: "Submission Failed",
+          description: `Failed to submit request: ${insertError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log('Successfully inserted pending user:', insertedData);
