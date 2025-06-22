@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -63,6 +62,7 @@ const AuthPage = () => {
   };
 
   const handleSubmitPendingRequest = async () => {
+    // Authentication guard
     if (!user?.email) {
       toast({
         title: "Authentication Required",
@@ -83,35 +83,43 @@ const AuthPage = () => {
         .eq('email', user.email)
         .maybeSingle();
 
+      console.log('Existing pending check:', { existingPending, checkError });
+
       if (checkError) {
         console.error('Error checking existing pending user:', checkError);
-        throw checkError;
+        throw new Error(`Database error: ${checkError.message}`);
       }
 
       if (existingPending) {
         toast({
           title: "Already Submitted",
-          description: "Your access request has already been submitted and is pending approval.",
+          description: "You've already requested access. Your request is pending approval.",
         });
-        setIsSubmittingPending(false);
         return;
       }
 
       // Insert new pending user
-      const { error: insertError } = await supabase
+      const insertData = {
+        email: user.email,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+        google_id: user.id,
+      };
+
+      console.log('Inserting pending user:', insertData);
+
+      const { data: insertedData, error: insertError } = await supabase
         .from('pending_users')
-        .insert({
-          email: user.email,
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-          google_id: user.id,
-        });
+        .insert(insertData)
+        .select()
+        .single();
 
       if (insertError) {
         console.error('Error inserting pending user:', insertError);
-        throw insertError;
+        throw new Error(`Failed to submit request: ${insertError.message}`);
       }
 
-      console.log('Successfully submitted pending request');
+      console.log('Successfully inserted pending user:', insertedData);
+      
       toast({
         title: "Request Submitted",
         description: "Your access request has been submitted successfully. You will receive an email once approved.",
@@ -129,9 +137,9 @@ const AuthPage = () => {
         description: err.message || "Failed to submit access request. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmittingPending(false);
     }
-    
-    setIsSubmittingPending(false);
   };
 
   const handleVerifyCode = async (e: React.FormEvent) => {
