@@ -22,6 +22,7 @@ interface AuthContextType {
   verifyAccessCode: (code: string) => Promise<{ error: any; success?: boolean }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
+  bootstrapAdmin: () => Promise<{ success: boolean; data?: any; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -302,6 +303,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  // Bootstrap admin function - promotes first user to admin if no admin exists
+  const bootstrapAdmin = async () => {
+    try {
+      console.log('useAuth: Checking if admin bootstrap is needed');
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('useAuth: No session for bootstrap');
+        return { success: false, error: 'No active session' };
+      }
+
+      const { data, error } = await supabase.functions.invoke('bootstrap-admin', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('useAuth: Bootstrap admin error:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log('useAuth: Bootstrap admin result:', data);
+      
+      // If user was bootstrapped, update the profile state
+      if (data?.bootstrapped && data?.profile) {
+        setProfile(data.profile);
+      }
+      
+      return { success: true, data };
+    } catch (err) {
+      console.error('useAuth: Unexpected error in bootstrapAdmin:', err);
+      return { success: false, error: 'Failed to check admin bootstrap' };
+    }
+  };
+
   // Debug logging for context state
   console.log('useAuth context state:', {
     user: !!user,
@@ -322,6 +359,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       verifyAccessCode,
       signOut,
       updateProfile,
+      bootstrapAdmin,
     }}>
       {children}
     </AuthContext.Provider>

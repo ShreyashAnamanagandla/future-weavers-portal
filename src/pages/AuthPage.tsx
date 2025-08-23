@@ -14,7 +14,7 @@ const AuthPage = () => {
   const [accessCode, setAccessCode] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmittingPending, setIsSubmittingPending] = useState(false);
-  const { signInWithGoogle, verifyAccessCode, user, profile, loading, authStatus } = useAuth();
+  const { signInWithGoogle, verifyAccessCode, bootstrapAdmin, user, profile, loading, authStatus } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,10 +29,27 @@ const AuthPage = () => {
     });
     
     if (!loading && user && profile) {
-      console.log('User is fully authenticated, redirecting to home');
-      navigate('/');
+      console.log('User is fully authenticated, checking admin bootstrap');
+      
+      // Check if admin bootstrap is needed
+      bootstrapAdmin().then(({ success, data }) => {
+        if (success && data?.bootstrapped) {
+          console.log('User was bootstrapped as admin, redirecting to admin');
+          toast({
+            title: "Welcome Admin!",
+            description: "You've been automatically promoted to admin as the first user.",
+          });
+          navigate('/admin');
+        } else {
+          console.log('No bootstrap needed, redirecting to home');
+          navigate('/');
+        }
+      }).catch((err) => {
+        console.error('Bootstrap check failed:', err);
+        navigate('/');
+      });
     }
-  }, [user, profile, loading, navigate, authStatus]);
+  }, [user, profile, loading, navigate, authStatus, bootstrapAdmin, toast]);
 
   // Don't render if still loading
   if (loading) {
