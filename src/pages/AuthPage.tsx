@@ -48,6 +48,22 @@ const AuthPage = () => {
         console.error('Bootstrap check failed:', err);
         navigate('/');
       });
+    } else if (!loading && user && authStatus === 'pending') {
+      // Try to bootstrap admin for pending users
+      console.log('Checking bootstrap for pending user');
+      bootstrapAdmin().then(({ success, data }) => {
+        if (success && data?.bootstrapped) {
+          console.log('Pending user was bootstrapped as admin');
+          toast({
+            title: "Welcome Admin!",
+            description: "You've been automatically promoted to admin as the first user.",
+          });
+          // Refresh the page to update auth status
+          window.location.reload();
+        }
+      }).catch((err) => {
+        console.error('Bootstrap check failed for pending user:', err);
+      });
     }
   }, [user, profile, loading, navigate, authStatus, bootstrapAdmin, toast]);
 

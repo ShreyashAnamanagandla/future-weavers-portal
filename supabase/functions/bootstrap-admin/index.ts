@@ -31,17 +31,13 @@ serve(async (req) => {
       );
     }
 
-    // Create client with user token to get user info
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: { headers: { Authorization: authHeader } }
-      }
-    );
+    console.log('Auth header received:', authHeader.substring(0, 20) + '...');
 
-    // Get current user
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    // Extract JWT token from Authorization header
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verify the JWT token using admin client
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
       console.log('Failed to get user:', userError);
       return new Response(
@@ -86,9 +82,9 @@ serve(async (req) => {
       .from('profiles')
       .select('id, role')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError) {
+    if (profileError && profileError.code !== 'PGRST116') {
       console.error('Error getting user profile:', profileError);
       return new Response(
         JSON.stringify({ error: 'Failed to get user profile' }),
@@ -96,20 +92,52 @@ serve(async (req) => {
       );
     }
 
-    // Promote current user to admin
-    const { data: updatedProfile, error: updateError } = await supabaseAdmin
-      .from('profiles')
-      .update({ role: 'admin' })
-      .eq('id', user.id)
-      .select()
-      .single();
+    let updatedProfile;
 
-    if (updateError) {
-      console.error('Error promoting user to admin:', updateError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to promote user to admin' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // If user doesn't have a profile, create one
+    if (!userProfile) {
+      console.log('Creating new admin profile for user');
+      const { data: newProfile, error: createError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email!,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+          role: 'admin',
+          avatar_url: user.user_metadata?.avatar_url || null,
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Error creating admin profile:', createError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to create admin profile' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      updatedProfile = newProfile;
+    } else {
+
+      // Promote existing user to admin
+      console.log('Updating existing profile to admin');
+      const { data: promotedProfile, error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({ role: 'admin' })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error promoting user to admin:', updateError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to promote user to admin' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      updatedProfile = promotedProfile;
     }
 
     console.log('Successfully bootstrapped admin:', updatedProfile);
