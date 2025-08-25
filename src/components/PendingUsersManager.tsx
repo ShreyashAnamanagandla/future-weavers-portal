@@ -71,7 +71,13 @@ const PendingUsersManager = () => {
       
       // Send approval email
       try {
-        const { error: emailError } = await supabase.functions.invoke('send-approval-email', {
+        console.log('PendingUsersManager: Attempting to send approval email:', {
+          email: variables.email,
+          userName: data.user_name || variables.email,
+          role: variables.role
+        });
+        
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('send-approval-email', {
           body: {
             email: variables.email,
             userName: data.user_name || variables.email,
@@ -80,11 +86,17 @@ const PendingUsersManager = () => {
           }
         });
         
+        console.log('PendingUsersManager: Email function response:', { emailData, emailError });
+        
         if (emailError) {
-          console.error('PendingUsersManager: Email sending failed:', emailError);
+          console.error('PendingUsersManager: Email sending failed with error:', {
+            error: emailError,
+            message: emailError.message,
+            details: emailError.details || 'No additional details'
+          });
           toast({
             title: "Email Failed",
-            description: "User approved but email sending failed. Access code: " + data.access_code,
+            description: `User approved but email sending failed: ${emailError.message || 'Unknown error'}. Access code: ${data.access_code}`,
             variant: "destructive",
           });
         } else {
@@ -94,11 +106,15 @@ const PendingUsersManager = () => {
             description: "Approval email sent successfully",
           });
         }
-      } catch (emailError) {
-        console.error('PendingUsersManager: Failed to send email:', emailError);
+      } catch (emailError: any) {
+        console.error('PendingUsersManager: Exception while sending email:', {
+          error: emailError,
+          message: emailError?.message || 'Unknown error',
+          stack: emailError?.stack
+        });
         toast({
           title: "Email Failed",
-          description: "User approved but email sending failed. Access code: " + data.access_code,
+          description: `User approved but email sending failed: ${emailError?.message || 'Unknown error'}. Access code: ${data.access_code}`,
           variant: "destructive",
         });
       }
