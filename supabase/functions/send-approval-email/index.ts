@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -24,10 +23,14 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Sending approval email function called");
+    
     const { email, userName, role, accessCode }: ApprovalEmailRequest = await req.json();
+    
+    console.log("Email data received:", { email, userName, role, accessCode: "***" });
 
     const emailResponse = await resend.emails.send({
-      from: "LoomeroFlow <onboarding@resend.dev>",
+      from: "Lovable <onboarding@resend.dev>",
       to: [email],
       subject: "🎉 Your Access to LoomeroFlow Has Been Approved!",
       html: `
