@@ -74,7 +74,8 @@ const PendingUsersManager = () => {
         console.log('PendingUsersManager: Attempting to send approval email:', {
           email: variables.email,
           userName: data.user_name || variables.email,
-          role: variables.role
+          role: variables.role,
+          accessCode: data.access_code ? 'Present' : 'Missing'
         });
         
         const { data: emailData, error: emailError } = await supabase.functions.invoke('send-approval-email', {
@@ -86,7 +87,13 @@ const PendingUsersManager = () => {
           }
         });
         
-        console.log('PendingUsersManager: Email function response:', { emailData, emailError });
+        console.log('PendingUsersManager: Email function response:', { 
+          emailData, 
+          emailError,
+          hasData: !!emailData,
+          errorMessage: emailError?.message,
+          errorDetails: emailError?.details || emailError
+        });
         
         if (emailError) {
           console.error('PendingUsersManager: Email sending failed with error:', {
