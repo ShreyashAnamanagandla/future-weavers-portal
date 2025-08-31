@@ -1,7 +1,21 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Validate API key exists
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+if (!resendApiKey) {
+  console.error("RESEND_API_KEY environment variable is not set");
+}
+
+let resend: Resend | null = null;
+try {
+  if (resendApiKey) {
+    resend = new Resend(resendApiKey);
+    console.log("Resend client initialized successfully");
+  }
+} catch (error) {
+  console.error("Failed to initialize Resend client:", error);
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,17 +31,61 @@ interface ApprovalEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log(`${req.method} request received to send-approval-email function`);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    console.log("Handling OPTIONS preflight request");
+    return new Response(null, { 
+      status: 200,
+      headers: corsHeaders 
+    });
   }
 
   try {
-    console.log("Sending approval email function called");
+    console.log("Processing approval email request");
     
-    const { email, userName, role, accessCode }: ApprovalEmailRequest = await req.json();
+    // Validate Resend client is available
+    if (!resend) {
+      console.error("Resend client not initialized - API key missing");
+      return new Response(
+        JSON.stringify({ 
+          error: "Email service not configured properly", 
+          details: "RESEND_API_KEY not found" 
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
     
-    console.log("Email data received:", { email, userName, role, accessCode: "***" });
+    const body = await req.json();
+    console.log("Request body received:", { 
+      email: body.email, 
+      userName: body.userName, 
+      role: body.role,
+      hasAccessCode: !!body.accessCode
+    });
+    
+    const { email, userName, role, accessCode }: ApprovalEmailRequest = body;
+    
+    // Validate required fields
+    if (!email || !role || !accessCode) {
+      console.error("Missing required fields:", { email: !!email, role: !!role, accessCode: !!accessCode });
+      return new Response(
+        JSON.stringify({ 
+          error: "Missing required fields", 
+          details: "email, role, and accessCode are required" 
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    console.log("Sending email to:", email, "with role:", role);
 
     const emailResponse = await resend.emails.send({
       from: "Lovable <onboarding@resend.dev>",
@@ -71,9 +129,19 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error in send-approval-email function:", error);
+    console.error("Error in send-approval-email function:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: "Failed to send approval email",
+        details: error.message,
+        timestamp: new Date().toISOString()
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
