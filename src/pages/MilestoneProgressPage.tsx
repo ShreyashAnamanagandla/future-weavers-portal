@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Calendar, CheckCircle, Clock, FileText, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { CertificateGenerator } from '@/components/CertificateGenerator';
+import { LinkedInPostGenerator } from '@/components/LinkedInPostGenerator';
 
 interface Milestone {
   id: string;
@@ -17,6 +19,7 @@ interface Milestone {
   description: string;
   due_date: string;
   projects: {
+    id: string;
     title: string;
   };
 }
@@ -41,12 +44,36 @@ const MilestoneProgressPage = () => {
   const [loading, setLoading] = useState(true);
   const [submissionNotes, setSubmissionNotes] = useState('');
   const [mentorFeedback, setMentorFeedback] = useState('');
+  const [userBadges, setUserBadges] = useState<Array<any>>([]);
 
   useEffect(() => {
     if (id) {
       fetchMilestoneData();
+      if (profile?.role === 'intern') {
+        fetchUserBadges();
+      }
     }
-  }, [id]);
+  }, [id, profile]);
+
+  const fetchUserBadges = async () => {
+    if (!profile?.id) return;
+    
+    const { data, error } = await supabase
+      .from('user_badges')
+      .select(`
+        id,
+        badges (
+          id,
+          name,
+          badge_type
+        )
+      `)
+      .eq('user_id', profile.id);
+
+    if (!error && data) {
+      setUserBadges(data.map(item => item.badges).filter(Boolean));
+    }
+  };
 
   const fetchMilestoneData = async () => {
     if (!id) return;
@@ -57,6 +84,7 @@ const MilestoneProgressPage = () => {
       .select(`
         *,
         projects (
+          id,
           title
         )
       `)
@@ -165,10 +193,20 @@ const MilestoneProgressPage = () => {
         variant: "destructive",
       });
     } else {
+      const statusText = newStatus === 'approved' ? 'approved' : 'revision requested';
       toast({
         title: "Success",
-        description: `Milestone ${newStatus}`,
+        description: `Milestone ${statusText}`,
       });
+      
+      // If approved and this completes all milestones for the project, trigger certificate generation
+      if (newStatus === 'approved') {
+        toast({
+          title: "Milestone Completed!",
+          description: "The intern can now generate their certificate and LinkedIn post.",
+        });
+      }
+      
       fetchMilestoneData();
     }
   };
@@ -312,6 +350,30 @@ const MilestoneProgressPage = () => {
                   )}
                 </CardContent>
               </Card>
+            )}
+
+            {progress?.status === 'approved' && profile?.role === 'intern' && (
+              <>
+                <div className="mt-6">
+                  <CertificateGenerator
+                    internId={profile.id}
+                    projectId={milestone.projects.id}
+                    internName={profile.full_name || profile.email}
+                    projectTitle={milestone.projects.title}
+                    mentorName={progress.mentor_id ? 'Mentor' : undefined}
+                    completionDate={progress.reviewed_at}
+                  />
+                </div>
+                
+                <div className="mt-6">
+                  <LinkedInPostGenerator
+                    internName={profile.full_name || profile.email}
+                    projectTitle={milestone.projects.title}
+                    badges={userBadges}
+                    mentorName={progress.mentor_id ? 'Mentor' : undefined}
+                  />
+                </div>
+              </>
             )}
           </div>
 

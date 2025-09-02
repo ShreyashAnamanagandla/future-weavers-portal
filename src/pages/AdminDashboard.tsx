@@ -69,16 +69,24 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Latest system activities</CardDescription>
+              <CardTitle>Certificate & LinkedIn Management</CardTitle>
+              <CardDescription>Manage certificates and social sharing features</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-center text-muted-foreground py-8">
-                No recent activity to display
-              </p>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Certificate Generation</span>
+                <Badge variant="default">Active</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>LinkedIn Integration</span>
+                <Badge variant="default">Available</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Badge System</span>
+                <Badge variant="default">Operational</Badge>
+              </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>System Status</CardTitle>

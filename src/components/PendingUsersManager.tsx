@@ -102,16 +102,24 @@ const PendingUsersManager = () => {
             details: emailError.details || 'No additional details'
           });
           toast({
-            title: "Email Failed",
-            description: `User approved but email sending failed: ${emailError.message || 'Unknown error'}. Access code: ${data.access_code}`,
-            variant: "destructive",
+            title: "Approval Successful, Email Failed",
+            description: `User approved but email notification failed: ${emailError.message}`,
+            variant: "destructive"
           });
         } else {
-          console.log('PendingUsersManager: Approval email sent successfully');
+          console.log('PendingUsersManager: Email sent successfully, showing success toast');
           toast({
-            title: "Email Sent",
-            description: "Approval email sent successfully",
+            title: "User Approved & Email Sent!",
+            description: `${variables.email} has been approved and notified with their access code.`,
           });
+          
+          // Trigger a refresh to update the UI and show the user they should check their email
+          setTimeout(() => {
+            toast({
+              title: "Next Steps for User",
+              description: `${variables.email} should check their email for the access code, then sign in again to enter it.`,
+            });
+          }, 2000);
         }
       } catch (emailError: any) {
         console.error('PendingUsersManager: Exception while sending email:', {
