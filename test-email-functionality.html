@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Email Functionality</title>
+</head>
+<body>
+    <h1>Email Function Test</h1>
+    <button onclick="testEmailFunction()">Test Send Approval Email</button>
+    <div id="result"></div>
+
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+        
+        const supabase = createClient(
+            'https://ikjshkvjhitbdwzutpsh.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlranNoa3ZqaGl0YmR3enV0cHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjY1NjIsImV4cCI6MjA2NTc0MjU2Mn0.paRPUpAgAPvRknRivqHlhvh7QVrRMWs32R93dx30Kbg'
+        );
+
+        window.testEmailFunction = async function() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                // First test connection
+                console.log('Testing connection...');
+                const connectionResult = await supabase.functions.invoke('test-connection');
+                console.log('Connection result:', connectionResult);
+                
+                // Then test email function
+                console.log('Testing email function...');
+                const emailResult = await supabase.functions.invoke('send-approval-email', {
+                    body: {
+                        email: 'test@example.com',
+                        userName: 'Test User',
+                        role: 'intern',
+                        accessCode: '123456'
+                    }
+                });
+                
+                console.log('Email result:', emailResult);
+                
+                resultDiv.innerHTML = `
+                    <h2>Results:</h2>
+                    <h3>Connection Test:</h3>
+                    <pre>${JSON.stringify(connectionResult, null, 2)}</pre>
+                    <h3>Email Test:</h3>
+                    <pre>${JSON.stringify(emailResult, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>
