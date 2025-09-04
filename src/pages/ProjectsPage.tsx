@@ -9,8 +9,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Calendar, Users, Clock } from 'lucide-react';
+import { Plus, Calendar, Users, Clock, Edit, Trash2, MoreVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import EditProjectDialog from '@/components/EditProjectDialog';
+import DeleteProjectDialog from '@/components/DeleteProjectDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Project {
   id: string;
@@ -30,6 +33,9 @@ const ProjectsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [newProject, setNewProject] = useState({
     title: '',
     description: '',
@@ -88,6 +94,16 @@ const ProjectsPage = () => {
       setNewProject({ title: '', description: '', duration_weeks: 12 });
       fetchProjects();
     }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setSelectedProject(project);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteProject = (project: Project) => {
+    setSelectedProject(project);
+    setIsDeleteDialogOpen(true);
   };
 
   if (loading) {
@@ -189,14 +205,36 @@ const ProjectsPage = () => {
                     Active
                   </Badge>
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 flex space-x-2">
                   <Button 
                     variant="outline" 
-                    className="w-full"
+                    className="flex-1"
                     onClick={() => window.location.href = `/projects/${project.id}`}
                   >
                     View Details
                   </Button>
+                  {profile?.role === 'admin' && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEditProject(project)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteProject(project)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -223,6 +261,20 @@ const ProjectsPage = () => {
             </CardContent>
           </Card>
         )}
+
+        <EditProjectDialog
+          project={selectedProject}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSuccess={fetchProjects}
+        />
+
+        <DeleteProjectDialog
+          project={selectedProject}
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onSuccess={fetchProjects}
+        />
       </div>
     </div>
   );

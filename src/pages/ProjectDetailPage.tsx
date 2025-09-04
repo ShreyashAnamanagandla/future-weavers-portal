@@ -10,8 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Calendar, CheckCircle, Clock, User, ArrowLeft } from 'lucide-react';
+import { Plus, Calendar, CheckCircle, Clock, User, ArrowLeft, Edit, Trash2, MoreVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import EditProjectDialog from '@/components/EditProjectDialog';
+import DeleteProjectDialog from '@/components/DeleteProjectDialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Project {
   id: string;
@@ -55,6 +58,8 @@ const ProjectDetailPage = () => {
   const [progress, setProgress] = useState<Progress[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateMilestoneOpen, setIsCreateMilestoneOpen] = useState(false);
+  const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+  const [isDeleteProjectOpen, setIsDeleteProjectOpen] = useState(false);
   const [newMilestone, setNewMilestone] = useState({
     title: '',
     description: '',
@@ -157,6 +162,10 @@ const ProjectDetailPage = () => {
     return progress.filter(p => p.milestone_id === milestoneId && p.status === 'approved').length;
   };
 
+  const handleProjectDeleted = () => {
+    window.location.href = '/projects';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-loomero-background flex items-center justify-center">
@@ -194,7 +203,7 @@ const ProjectDetailPage = () => {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-loomero-text font-anta">
               {project.title}
             </h1>
@@ -202,6 +211,28 @@ const ProjectDetailPage = () => {
               Created by {project.profiles?.full_name || 'Unknown'}
             </p>
           </div>
+          {profile?.role === 'admin' && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditProjectOpen(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Project
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setIsDeleteProjectOpen(true)}
+                  className="text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Project
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -398,6 +429,20 @@ const ProjectDetailPage = () => {
             </CardContent>
           </Card>
         )}
+
+        <EditProjectDialog
+          project={project}
+          open={isEditProjectOpen}
+          onOpenChange={setIsEditProjectOpen}
+          onSuccess={fetchProjectData}
+        />
+
+        <DeleteProjectDialog
+          project={project}
+          open={isDeleteProjectOpen}
+          onOpenChange={setIsDeleteProjectOpen}
+          onSuccess={handleProjectDeleted}
+        />
       </div>
     </div>
   );
