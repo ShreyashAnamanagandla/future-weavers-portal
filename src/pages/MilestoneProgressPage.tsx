@@ -199,6 +199,28 @@ const MilestoneProgressPage = () => {
         description: `Milestone ${statusText}`,
       });
       
+      // Send email notification for status change
+      try {
+        // Always notify the intern when mentor provides feedback
+        const notificationData = {
+          recipientEmail: profile?.email || 'intern@loomeroflow.com',
+          recipientName: profile?.full_name || 'Intern',
+          milestoneTitle: milestone.title,
+          projectTitle: milestone.projects?.title || 'Project',
+          status: newStatus, // This will be 'approved' or 'rejected'
+          feedback: mentorFeedback
+        };
+        
+        await supabase.functions.invoke('send-milestone-notification', {
+          body: notificationData
+        });
+        
+        console.log('Milestone notification sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send milestone notification:', emailError);
+        // Don't fail the whole operation if email fails
+      }
+      
       // If approved and this completes all milestones for the project, trigger certificate generation
       if (newStatus === 'approved') {
         toast({
@@ -213,11 +235,11 @@ const MilestoneProgressPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-green-500';
-      case 'rejected': return 'bg-red-500';
-      case 'submitted': return 'bg-blue-500';
-      case 'in_progress': return 'bg-yellow-500';
-      default: return 'bg-gray-500';
+      case 'approved': return 'bg-green-500 text-white';
+      case 'rejected': return 'bg-red-500 text-white';
+      case 'submitted': return 'bg-blue-500 text-white';
+      case 'in_progress': return 'bg-yellow-500 text-black';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -233,19 +255,19 @@ const MilestoneProgressPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-loomero-background flex items-center justify-center">
-        <div className="text-loomero-text font-anta text-xl">Loading milestone...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center story-weave">
+        <div className="text-foreground font-anta text-xl">Loading milestone...</div>
       </div>
     );
   }
 
   if (!milestone) {
     return (
-      <div className="min-h-screen bg-loomero-background flex items-center justify-center">
-        <Card className="max-w-md">
+      <div className="min-h-screen bg-background flex items-center justify-center story-weave">
+        <Card className="max-w-md loomero-warm-shadow">
           <CardContent className="text-center py-12">
-            <h3 className="text-lg font-semibold text-loomero-text mb-2">Milestone Not Found</h3>
-            <p className="text-loomero-text/70 mb-4">The milestone you're looking for doesn't exist.</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Milestone Not Found</h3>
+            <p className="text-muted-foreground mb-4">The milestone you're looking for doesn't exist.</p>
             <Button onClick={() => window.history.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
@@ -257,7 +279,7 @@ const MilestoneProgressPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-loomero-background p-6">
+    <div className="min-h-screen bg-background p-6 story-weave">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center mb-6">
           <Button 
@@ -269,10 +291,10 @@ const MilestoneProgressPage = () => {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-loomero-text font-anta">
+            <h1 className="text-3xl font-bold text-foreground font-anta">
               {milestone.title}
             </h1>
-            <p className="text-loomero-text/70">
+            <p className="text-muted-foreground">
               {milestone.projects?.title}
             </p>
           </div>

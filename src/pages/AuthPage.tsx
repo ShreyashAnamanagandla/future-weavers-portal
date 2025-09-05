@@ -71,8 +71,8 @@ const AuthPage = () => {
   if (loading) {
     console.log('AuthPage: Still loading...');
     return (
-      <div className="min-h-screen bg-loomero-background flex items-center justify-center">
-        <div className="text-loomero-text font-anta text-xl">Loading...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center story-weave">
+        <div className="text-foreground font-anta text-xl">Loading...</div>
       </div>
     );
   }
@@ -242,10 +242,10 @@ const AuthPage = () => {
   });
 
   return (
-    <div className="min-h-screen bg-loomero-background flex items-center justify-center p-6">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 story-weave">
+      <Card className="w-full max-w-md loomero-warm-shadow">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-anta text-loomero-text">
+          <CardTitle className="text-2xl font-anta text-foreground">
             Welcome to LoomeroFlow
           </CardTitle>
           <CardDescription>

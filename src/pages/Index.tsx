@@ -28,16 +28,16 @@ const Index = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-loomero-background flex items-center justify-center p-6">
-        <Card className="max-w-md">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6 story-weave">
+        <Card className="max-w-md loomero-warm-shadow">
           <CardHeader>
-            <CardTitle className="text-center font-anta text-loomero-text">Welcome to LoomeroFlow</CardTitle>
+            <CardTitle className="text-center font-anta text-foreground">Welcome to LoomeroFlow</CardTitle>
             <CardDescription className="text-center">
               Your comprehensive internship management platform
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Button onClick={() => navigate('/auth')}>
+            <Button onClick={() => navigate('/auth')} className="loomero-hero-gradient">
               Get Started
             </Button>
           </CardContent>
@@ -47,13 +47,13 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-loomero-background p-6">
+    <div className="min-h-screen bg-background p-6 story-weave">
       <div className="max-w-7xl mx-auto">
         <div className="text-center py-12">
-          <h1 className="text-4xl font-bold text-loomero-text font-anta mb-4">
+          <h1 className="text-4xl font-bold text-foreground font-anta mb-4">
             Welcome to LoomeroFlow
           </h1>
-          <p className="text-xl text-loomero-text/70 mb-8">
+          <p className="text-xl text-muted-foreground mb-8">
             Redirecting you to your dashboard...
           </p>
         </div>

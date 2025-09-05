@@ -12,21 +12,21 @@ const Header = () => {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'bg-red-500 hover:bg-red-600';
+        return 'bg-destructive hover:bg-destructive/90';
       case 'mentor':
-        return 'bg-blue-500 hover:bg-blue-600';
+        return 'bg-primary hover:bg-primary/90';
       case 'intern':
-        return 'bg-green-500 hover:bg-green-600';
+        return 'bg-secondary hover:bg-secondary/90';
       default:
-        return 'bg-gray-500 hover:bg-gray-600';
+        return 'bg-muted hover:bg-muted/90';
     }
   };
 
   return (
-    <header className="bg-white border-b border-loomero-accent/20 px-6 py-4">
+    <header className="bg-card border-b border-border px-6 py-4 loomero-warm-shadow">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-anta text-loomero-text">LoomeroFlow</h1>
+          <h1 className="text-xl font-anta text-foreground">LoomeroFlow</h1>
           <Badge className={`${getRoleBadgeColor(profile.role)} text-white`}>
             {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
           </Badge>
@@ -64,8 +64,8 @@ const Header = () => {
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <User className="h-4 w-4 text-loomero-text" />
-              <span className="text-loomero-text">{profile.full_name || profile.email}</span>
+              <User className="h-4 w-4 text-foreground" />
+              <span className="text-foreground">{profile.full_name || profile.email}</span>
             </div>
             <Button
               variant="outline"
