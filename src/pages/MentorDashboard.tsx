@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Award, Users, Clock, CheckCircle } from "lucide-react";
 import BadgeAwardDialog from "@/components/BadgeAwardDialog";
+import TaskAssignment from "@/components/TaskAssignment";
+import LinkedInRecommendation from "@/components/LinkedInRecommendation";
 
 interface PendingReview {
   id: string;
@@ -286,6 +288,12 @@ const MentorDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        <div className="space-y-8">
+          <TaskAssignment mode="mentor" />
+          
+          <LinkedInRecommendation mode="mentor" />
         </div>
 
         {/* Badge Award Dialog */}

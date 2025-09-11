@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Users, FolderOpen, Award, BarChart3 } from 'lucide-react';
 import PendingUsersManager from '@/components/PendingUsersManager';
+import AccessCodeManager from '@/components/AccessCodeManager';
 
 const AdminDashboard = () => {
   return (
@@ -65,6 +66,8 @@ const AdminDashboard = () => {
         </div>
 
         <PendingUsersManager />
+        
+        <AccessCodeManager />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>

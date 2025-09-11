@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Award, BookOpen, CheckCircle, Clock } from "lucide-react";
 import BadgeCard from "@/components/BadgeCard";
+import InternshipCountdown from "@/components/InternshipCountdown";
+import LinkedInRecommendation from "@/components/LinkedInRecommendation";
 
 interface UserBadge {
   id: string;
@@ -196,6 +198,10 @@ const InternDashboard = () => {
           </Card>
         </div>
 
+        <div className="mb-8">
+          <InternshipCountdown />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Badges */}
           <Card className="bg-white border-loomero-accent/20">
@@ -293,6 +299,10 @@ const InternDashboard = () => {
               )}
             </CardContent>
           </Card>
+        </div>
+        
+        <div className="mt-8">
+          <LinkedInRecommendation mode="intern" />
         </div>
       </div>
     </div>
