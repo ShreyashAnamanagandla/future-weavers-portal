@@ -29,25 +29,20 @@ const PendingUsersManager = () => {
   const { data: pendingUsers, isLoading, refetch } = useQuery({
     queryKey: ['pending-users'],
     queryFn: async () => {
-      console.log('PendingUsersManager: Fetching pending users');
       const { data, error } = await supabase
         .from('pending_users')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('PendingUsersManager: Error fetching pending users:', error);
         throw error;
       }
-      
-      console.log('PendingUsersManager: Fetched pending users:', data);
       return data as PendingUser[];
     },
   });
 
   const approveMutation = useMutation({
     mutationFn: async ({ email, role }: { email: string; role: UserRole }) => {
-      console.log('PendingUsersManager: Approving user:', { email, role });
       const { data, error } = await supabase.rpc('approve_user', {
         _email: email,
         _role: role,
@@ -55,15 +50,11 @@ const PendingUsersManager = () => {
       });
       
       if (error) {
-        console.error('PendingUsersManager: Error approving user:', error);
         throw error;
       }
-      
-      console.log('PendingUsersManager: User approved successfully:', data);
       return data[0];
     },
     onSuccess: async (data, variables) => {
-      console.log('PendingUsersManager: Approval successful, sending email');
       toast({
         title: "User Approved",
         description: `${variables.email} has been approved with access code: ${data.access_code}`,
@@ -71,13 +62,6 @@ const PendingUsersManager = () => {
       
       // Send approval email
       try {
-        console.log('PendingUsersManager: Attempting to send approval email:', {
-          email: variables.email,
-          userName: data.user_name || variables.email,
-          role: variables.role,
-          accessCode: data.access_code ? 'Present' : 'Missing'
-        });
-        
         const { data: emailData, error: emailError } = await supabase.functions.invoke('send-approval-email', {
           body: {
             email: variables.email,
@@ -87,27 +71,13 @@ const PendingUsersManager = () => {
           }
         });
         
-        console.log('PendingUsersManager: Email function response:', { 
-          emailData, 
-          emailError,
-          hasData: !!emailData,
-          errorMessage: emailError?.message,
-          errorDetails: emailError?.details || emailError
-        });
-        
         if (emailError) {
-          console.error('PendingUsersManager: Email sending failed with error:', {
-            error: emailError,
-            message: emailError.message,
-            details: emailError.details || 'No additional details'
-          });
           toast({
             title: "Approval Successful, Email Failed",
             description: `User approved but email notification failed: ${emailError.message}`,
             variant: "destructive"
           });
         } else {
-          console.log('PendingUsersManager: Email sent successfully, showing success toast');
           toast({
             title: "User Approved & Email Sent!",
             description: `${variables.email} has been approved and notified with their access code.`,
@@ -122,11 +92,6 @@ const PendingUsersManager = () => {
           }, 2000);
         }
       } catch (emailError: any) {
-        console.error('PendingUsersManager: Exception while sending email:', {
-          error: emailError,
-          message: emailError?.message || 'Unknown error',
-          stack: emailError?.stack
-        });
         toast({
           title: "Email Failed",
           description: `User approved but email sending failed: ${emailError?.message || 'Unknown error'}. Access code: ${data.access_code}`,
@@ -138,7 +103,6 @@ const PendingUsersManager = () => {
       queryClient.invalidateQueries({ queryKey: ['pending-users'] });
     },
     onError: (error) => {
-      console.error('PendingUsersManager: Approval failed:', error);
       toast({
         title: "Approval Failed",
         description: error.message,
@@ -149,7 +113,6 @@ const PendingUsersManager = () => {
 
   const handleApprove = (email: string) => {
     const role = selectedRoles[email];
-    console.log('PendingUsersManager: Handling approve for:', { email, role });
     
     if (!role) {
       toast({
@@ -164,7 +127,6 @@ const PendingUsersManager = () => {
   };
 
   const handleRoleChange = (email: string, role: string) => {
-    console.log('PendingUsersManager: Role changed for:', { email, role });
     setSelectedRoles(prev => ({
       ...prev,
       [email]: role as UserRole
@@ -172,7 +134,6 @@ const PendingUsersManager = () => {
   };
 
   const handleRefresh = () => {
-    console.log('PendingUsersManager: Manually refreshing pending users');
     refetch();
   };
 
