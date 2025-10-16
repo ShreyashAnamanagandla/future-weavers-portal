@@ -75,7 +75,6 @@ const LinkedInRecommendation: React.FC<LinkedInRecommendationProps> = ({
       if (error) throw error;
       setRecommendations(data || []);
     } catch (error) {
-      console.error('Error fetching recommendations:', error);
       toast({
         title: "Error",
         description: "Failed to fetch recommendations",
@@ -137,7 +136,6 @@ ${internName} consistently demonstrated ${selectedSkills}, and I have no doubt t
       setNewRecommendation({ content: '', linkedin_template: '' });
       fetchRecommendations();
     } catch (error: any) {
-      console.error('Error creating recommendation:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to create recommendation",
@@ -166,7 +164,6 @@ ${internName} consistently demonstrated ${selectedSkills}, and I have no doubt t
 
       fetchRecommendations();
     } catch (error: any) {
-      console.error('Error updating recommendation:', error);
       toast({
         title: "Error",
         description: "Failed to update recommendation",
@@ -183,7 +180,6 @@ ${internName} consistently demonstrated ${selectedSkills}, and I have no doubt t
         description: `${type} copied to clipboard`,
       });
     } catch (error) {
-      console.error('Error copying to clipboard:', error);
       toast({
         title: "Error",
         description: "Failed to copy to clipboard",

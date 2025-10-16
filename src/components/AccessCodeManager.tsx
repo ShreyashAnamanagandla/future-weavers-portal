@@ -48,7 +48,6 @@ const AccessCodeManager = () => {
       if (error) throw error;
       setAccessCodes(data || []);
     } catch (error) {
-      console.error('Error fetching access codes:', error);
       toast({
         title: "Error",
         description: "Failed to fetch access codes",
@@ -90,7 +89,6 @@ const AccessCodeManager = () => {
       setNewCode({ email: '', role: 'intern' });
       fetchAccessCodes();
     } catch (error: any) {
-      console.error('Error creating access code:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to create access code",
@@ -123,7 +121,6 @@ const AccessCodeManager = () => {
 
       fetchAccessCodes();
     } catch (error: any) {
-      console.error('Error resetting access code:', error);
       toast({
         title: "Error",
         description: "Failed to reset access code",
@@ -148,7 +145,6 @@ const AccessCodeManager = () => {
 
       fetchAccessCodes();
     } catch (error: any) {
-      console.error('Error deleting access code:', error);
       toast({
         title: "Error",
         description: "Failed to delete access code",

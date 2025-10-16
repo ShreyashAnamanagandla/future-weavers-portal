@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const { profile } = useAuth();
+  const { role } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (profile) {
+    if (role) {
       // Redirect to appropriate dashboard based on role
-      switch (profile.role) {
+      switch (role) {
         case 'admin':
           navigate('/admin');
           break;
@@ -24,9 +24,9 @@ const Index = () => {
           break;
       }
     }
-  }, [profile, navigate]);
+  }, [role, navigate]);
 
-  if (!profile) {
+  if (!role) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6 story-weave">
         <Card className="max-w-md loomero-warm-shadow">

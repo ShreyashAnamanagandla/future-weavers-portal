@@ -5,12 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { LogOut, User, FolderOpen, Award, BarChart3 } from 'lucide-react';
 
 const Header = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, role, signOut } = useAuth();
 
-  if (!user || !profile) return null;
+  if (!user || !profile || !role) return null;
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
+  const getRoleBadgeColor = (userRole: string) => {
+    switch (userRole) {
       case 'admin':
         return 'bg-destructive hover:bg-destructive/90';
       case 'mentor':
@@ -27,8 +27,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h1 className="text-xl font-anta text-foreground">LoomeroFlow</h1>
-          <Badge className={`${getRoleBadgeColor(profile.role)} text-white`}>
-            {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
+          <Badge className={`${getRoleBadgeColor(role)} text-white`}>
+            {role.charAt(0).toUpperCase() + role.slice(1)}
           </Badge>
         </div>
         
@@ -51,7 +51,7 @@ const Header = () => {
             <span>Badges</span>
           </Button>
 
-          {(profile.role === 'admin' || profile.role === 'mentor') && (
+          {(role === 'admin' || role === 'mentor') && (
             <Button
               variant="ghost"
               onClick={() => window.location.href = '/analytics'}

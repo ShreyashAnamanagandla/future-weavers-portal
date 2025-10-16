@@ -15,6 +15,7 @@ interface Profile {
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
+  role: 'admin' | 'mentor' | 'intern' | null;
   session: Session | null;
   loading: boolean;
   authStatus: 'pending' | 'approved' | 'new' | null;
@@ -295,6 +296,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user,
       profile,
+      role: profile?.role || null,
       session,
       loading,
       authStatus,

@@ -163,7 +163,7 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ mode, internId }) => {
           }
         });
       } catch (emailError) {
-        console.error('Email notification failed:', emailError);
+        // Email notification failed - continue anyway
       }
 
       toast({
@@ -182,7 +182,6 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ mode, internId }) => {
       setShowCreateForm(false);
       fetchData();
     } catch (error: any) {
-      console.error('Error creating task:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to create task",
@@ -209,7 +208,6 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ mode, internId }) => {
 
       fetchData();
     } catch (error: any) {
-      console.error('Error updating task:', error);
       toast({
         title: "Error",
         description: "Failed to update task status",

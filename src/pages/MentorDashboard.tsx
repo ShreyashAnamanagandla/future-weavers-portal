@@ -118,7 +118,7 @@ const MentorDashboard = () => {
         badgesAwarded: awardedBadges?.length || 0
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      // Error fetching dashboard data - silently fail
     }
 
     setLoading(false);

@@ -77,7 +77,6 @@ export function CertificateGenerator({
         description: "Certificate has been successfully created and issued.",
       });
     } catch (error) {
-      console.error('Error generating certificate:', error);
       toast({
         title: "Generation Failed",
         description: "Failed to generate certificate. Please try again.",

@@ -95,7 +95,7 @@ const InternshipCountdown: React.FC<CountdownProps> = ({ onComplete }) => {
         }
       }
     } catch (error) {
-      console.error('Error fetching internship data:', error);
+      // Error fetching internship data - silently fail
     } finally {
       setLoading(false);
     }

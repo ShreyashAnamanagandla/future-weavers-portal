@@ -9,7 +9,7 @@ interface AuthGuardProps {
 }
 
 const AuthGuard = ({ children, requiredRole }: AuthGuardProps) => {
-  const { user, profile, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,9 +19,9 @@ const AuthGuard = ({ children, requiredRole }: AuthGuardProps) => {
         return;
       }
 
-      if (requiredRole && profile?.role !== requiredRole) {
+      if (requiredRole && role !== requiredRole) {
         // Redirect to appropriate dashboard based on user role
-        switch (profile?.role) {
+        switch (role) {
           case 'admin':
             navigate('/admin');
             break;
@@ -36,7 +36,7 @@ const AuthGuard = ({ children, requiredRole }: AuthGuardProps) => {
         }
       }
     }
-  }, [user, profile, loading, requiredRole, navigate]);
+  }, [user, role, loading, requiredRole, navigate]);
 
   if (loading) {
     return (
@@ -50,7 +50,7 @@ const AuthGuard = ({ children, requiredRole }: AuthGuardProps) => {
     return null;
   }
 
-  if (requiredRole && profile?.role !== requiredRole) {
+  if (requiredRole && role !== requiredRole) {
     return null;
   }
 

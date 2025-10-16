@@ -214,11 +214,8 @@ const MilestoneProgressPage = () => {
         await supabase.functions.invoke('send-milestone-notification', {
           body: notificationData
         });
-        
-        console.log('Milestone notification sent successfully');
       } catch (emailError) {
-        console.error('Failed to send milestone notification:', emailError);
-        // Don't fail the whole operation if email fails
+        // Email notification failed - continue anyway
       }
       
       // If approved and this completes all milestones for the project, trigger certificate generation

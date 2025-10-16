@@ -70,7 +70,6 @@ ${projectHashtags}
         description: "Your professional LinkedIn post is ready to share.",
       });
     } catch (error) {
-      console.error('Error generating LinkedIn post:', error);
       toast({
         title: "Generation Failed",
         description: "Failed to generate LinkedIn post. Please try again.",
