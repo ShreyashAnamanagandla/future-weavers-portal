@@ -45,12 +45,16 @@ const AccessCodeManager = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Access codes fetch error:', error);
+        throw error;
+      }
       setAccessCodes(data || []);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Failed to fetch access codes:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch access codes",
+        description: error.message || "Failed to fetch access codes. Please ensure you have admin permissions.",
         variant: "destructive",
       });
     } finally {
