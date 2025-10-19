@@ -187,6 +187,30 @@ export type Database = {
           },
         ]
       }
+      mentor_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          intern_id: string
+          mentor_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          intern_id: string
+          mentor_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          intern_id?: string
+          mentor_id?: string
+        }
+        Relationships: []
+      }
       milestones: {
         Row: {
           created_at: string | null
@@ -478,11 +502,39 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       approve_user: {
         Args: {
           _approver_id: string
@@ -505,6 +557,10 @@ export type Database = {
       get_current_user_google_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
       }
       has_role: {
         Args: {
