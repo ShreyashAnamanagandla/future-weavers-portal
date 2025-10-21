@@ -38,7 +38,7 @@ interface User {
 }
 
 const BadgesPage = () => {
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { toast } = useToast();
   const [badges, setBadges] = useState<Badge[]>([]);
   const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
@@ -64,7 +64,7 @@ const BadgesPage = () => {
 
       // Fetch user's badges if intern, or all user badges if admin/mentor
       let userBadgesData = [];
-      if (profile.role === 'intern') {
+      if (role === 'intern') {
         const { data, error } = await supabase
           .from('user_badges')
           .select(`
@@ -97,16 +97,29 @@ const BadgesPage = () => {
         userBadgesData = data || [];
       }
 
-      // Fetch users for awarding (if admin/mentor)
+      // Fetch users for awarding (if admin/mentor) - get interns from user_roles table
       let usersData = [];
-      if (profile.role === 'admin' || profile.role === 'mentor') {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, role')
+      if (role === 'admin' || role === 'mentor') {
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('user_id')
           .eq('role', 'intern');
         
-        if (error) throw error;
-        usersData = data || [];
+        if (roleError) throw roleError;
+        
+        if (roleData && roleData.length > 0) {
+          const userIds = roleData.map(r => r.user_id);
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', userIds);
+          
+          if (profilesError) throw profilesError;
+          usersData = (profilesData || []).map(p => ({
+            ...p,
+            role: 'intern'
+          }));
+        }
       }
 
       setBadges(badgesData || []);
@@ -124,7 +137,7 @@ const BadgesPage = () => {
   };
 
   const getStats = () => {
-    if (profile?.role === 'intern') {
+    if (role === 'intern') {
       const totalBadges = badges.length;
       const earnedBadges = userBadges.length;
       const progressPercentage = totalBadges > 0 ? (earnedBadges / totalBadges) * 100 : 0;
@@ -165,13 +178,13 @@ const BadgesPage = () => {
               Badge System
             </h1>
             <p className="text-loomero-text/70">
-              {profile?.role === 'intern' 
+              {role === 'intern' 
                 ? 'Track your achievements and earned recognition'
                 : 'Manage and award badges to recognize achievements'
               }
             </p>
           </div>
-          {(profile?.role === 'admin' || profile?.role === 'mentor') && (
+          {(role === 'admin' || role === 'mentor') && (
             <Button onClick={() => setIsAwardDialogOpen(true)}>
               <Award className="h-4 w-4 mr-2" />
               Award Badge
@@ -181,7 +194,7 @@ const BadgesPage = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {profile?.role === 'intern' ? (
+          {role === 'intern' ? (
             <>
               <Card className="bg-white border-loomero-accent/20">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -277,7 +290,7 @@ const BadgesPage = () => {
         <Tabs defaultValue="earned" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="earned">
-              {profile?.role === 'intern' ? 'My Badges' : 'Awarded Badges'}
+              {role === 'intern' ? 'My Badges' : 'Awarded Badges'}
             </TabsTrigger>
             <TabsTrigger value="available">All Badges</TabsTrigger>
           </TabsList>
@@ -302,10 +315,10 @@ const BadgesPage = () => {
                 <CardContent className="text-center py-12">
                   <Award className="h-12 w-12 text-loomero-text/40 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-loomero-text mb-2">
-                    {profile?.role === 'intern' ? 'No Badges Yet' : 'No Badges Awarded Yet'}
+                    {role === 'intern' ? 'No Badges Yet' : 'No Badges Awarded Yet'}
                   </h3>
                   <p className="text-loomero-text/70">
-                    {profile?.role === 'intern' 
+                    {role === 'intern' 
                       ? "Start completing milestones and projects to earn your first badge!"
                       : "Award badges to recognize intern achievements and progress."
                     }

@@ -283,7 +283,6 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
         }
         Insert: {
@@ -292,7 +291,6 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
-          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
         Update: {
@@ -301,7 +299,6 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
         Relationships: []
@@ -582,6 +579,15 @@ export type Database = {
         Returns: {
           code_id: string
           role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
+      verify_access_code_secure: {
+        Args: { _code: string; _email: string }
+        Returns: {
+          code_id: string
+          full_name: string
+          role: Database["public"]["Enums"]["user_role"]
+          success: boolean
         }[]
       }
       verify_user_login: {

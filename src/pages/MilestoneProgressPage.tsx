@@ -37,7 +37,7 @@ interface Progress {
 
 const MilestoneProgressPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { toast } = useToast();
   const [milestone, setMilestone] = useState<Milestone | null>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
@@ -49,11 +49,11 @@ const MilestoneProgressPage = () => {
   useEffect(() => {
     if (id) {
       fetchMilestoneData();
-      if (profile?.role === 'intern') {
+      if (role === 'intern') {
         fetchUserBadges();
       }
     }
-  }, [id, profile]);
+  }, [id, profile, role]);
 
   const fetchUserBadges = async () => {
     if (!profile?.id) return;
@@ -97,7 +97,7 @@ const MilestoneProgressPage = () => {
       .select('*')
       .eq('milestone_id', id);
 
-    if (profile?.role === 'intern') {
+    if (role === 'intern') {
       progressQuery = progressQuery.eq('intern_id', profile.id);
     }
 
@@ -121,7 +121,7 @@ const MilestoneProgressPage = () => {
   };
 
   const startProgress = async () => {
-    if (!id || !profile || profile.role !== 'intern') return;
+    if (!id || !profile || role !== 'intern') return;
 
     const { error } = await supabase
       .from('progress')
@@ -147,7 +147,7 @@ const MilestoneProgressPage = () => {
   };
 
   const updateSubmission = async () => {
-    if (!progress || !profile || profile.role !== 'intern') return;
+    if (!progress || !profile || role !== 'intern') return;
 
     const { error } = await supabase
       .from('progress')
@@ -174,7 +174,7 @@ const MilestoneProgressPage = () => {
   };
 
   const updateMentorFeedback = async (newStatus: 'approved' | 'rejected') => {
-    if (!progress || !profile || (profile.role !== 'mentor' && profile.role !== 'admin')) return;
+    if (!progress || !profile || (role !== 'mentor' && role !== 'admin')) return;
 
     const { error } = await supabase
       .from('progress')
@@ -314,7 +314,7 @@ const MilestoneProgressPage = () => {
               </CardContent>
             </Card>
 
-            {profile?.role === 'intern' && (
+            {role === 'intern' && (
               <Card className="bg-white border-loomero-accent/20">
                 <CardHeader>
                   <CardTitle className="text-loomero-text font-anta">Your Submission</CardTitle>
@@ -371,7 +371,7 @@ const MilestoneProgressPage = () => {
               </Card>
             )}
 
-            {progress?.status === 'approved' && profile?.role === 'intern' && (
+            {progress?.status === 'approved' && role === 'intern' && (
               <>
                 <div className="mt-6">
                   <CertificateGenerator
@@ -413,7 +413,7 @@ const MilestoneProgressPage = () => {
               </CardContent>
             </Card>
 
-            {(profile?.role === 'mentor' || profile?.role === 'admin') && progress?.status === 'submitted' && (
+            {(role === 'mentor' || role === 'admin') && progress?.status === 'submitted' && (
               <Card className="bg-white border-loomero-accent/20">
                 <CardHeader>
                   <CardTitle className="text-loomero-text font-anta">Review Submission</CardTitle>

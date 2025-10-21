@@ -8,7 +8,6 @@ interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  role: 'admin' | 'mentor' | 'intern';
   avatar_url: string | null;
 }
 
@@ -31,6 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [role, setRole] = useState<'admin' | 'mentor' | 'intern' | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [authStatus, setAuthStatus] = useState<'pending' | 'approved' | 'new' | null>(null);
@@ -95,6 +95,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (existingProfile && !profileError) {
         setProfile(existingProfile);
+        
+        // Fetch role from user_roles table
+        const { data: roleData } = await supabase
+          .rpc('get_user_role', { _user_id: existingProfile.id });
+        
+        if (roleData) {
+          setRole(roleData);
+        }
+        
         setAuthStatus('approved');
         setLoading(false);
         return;
@@ -212,12 +221,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!fetchError && updatedProfile) {
         setProfile(updatedProfile);
+        
+        // Fetch role from user_roles table
+        const { data: roleData } = await supabase
+          .rpc('get_user_role', { _user_id: updatedProfile.id });
+        
+        if (roleData) {
+          setRole(roleData);
+        }
+        
         setAuthStatus('approved');
       }
 
       toast({
         title: "Welcome Back!",
-        description: `Successfully logged in as ${role}.`,
+        description: `Successfully logged in.`,
       });
 
       return { error: null, success: true };
@@ -235,6 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+    setRole(null);
     setSession(null);
     setAuthStatus(null);
     
