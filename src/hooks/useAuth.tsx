@@ -236,18 +236,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!fetchError && updatedProfile) {
+      if (updatedProfile) {
         setProfile(updatedProfile);
         
         // Fetch role from user_roles table
-        const { data: roleData } = await supabase
+        const { data: roleData, error: roleError } = await supabase
           .rpc('get_user_role', { _user_id: updatedProfile.id });
         
         if (roleData) {
           setRole(roleData);
+        } else if (roleError) {
+          console.error('Error fetching role:', roleError);
         }
+      } else if (fetchError) {
+        console.error('Error fetching profile:', fetchError);
       }
       
       setAuthStatus('approved');
