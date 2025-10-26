@@ -19,7 +19,7 @@ interface CountdownProps {
 }
 
 const InternshipCountdown: React.FC<CountdownProps> = ({ onComplete }) => {
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const [internshipData, setInternshipData] = useState<InternshipData | null>(null);
   const [timeRemaining, setTimeRemaining] = useState({
     days: 0,
@@ -31,10 +31,10 @@ const InternshipCountdown: React.FC<CountdownProps> = ({ onComplete }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (profile?.role === 'intern') {
+    if (role === 'intern') {
       fetchInternshipData();
     }
-  }, [profile]);
+  }, [role]);
 
   useEffect(() => {
     if (internshipData) {

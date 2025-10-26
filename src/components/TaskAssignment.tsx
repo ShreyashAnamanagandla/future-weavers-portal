@@ -110,10 +110,17 @@ const TaskAssignment: React.FC<TaskAssignmentProps> = ({ mode, internId }) => {
 
         // Fetch interns for task assignment
         if (!internId) {
+          const { data: userRolesData } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', 'intern');
+          
+          const internIds = userRolesData?.map(ur => ur.user_id) || [];
+          
           const { data: internsData } = await supabase
             .from('profiles')
             .select('id, full_name, email')
-            .eq('role', 'intern');
+            .in('id', internIds);
 
           setInterns(internsData || []);
         }

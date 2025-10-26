@@ -51,7 +51,7 @@ interface Progress {
 
 const ProjectDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { toast } = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -96,7 +96,7 @@ const ProjectDetailPage = () => {
 
     // Fetch progress if user is admin or mentor
     let progressData = [];
-    if (profile?.role === 'admin' || profile?.role === 'mentor') {
+    if (role === 'admin' || role === 'mentor') {
       const { data, error: progressError } = await supabase
         .from('progress')
         .select(`
@@ -211,7 +211,7 @@ const ProjectDetailPage = () => {
               Created by {project.profiles?.full_name || 'Unknown'}
             </p>
           </div>
-          {profile?.role === 'admin' && (
+          {role === 'admin' && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -290,7 +290,7 @@ const ProjectDetailPage = () => {
               <CardTitle className="text-loomero-text font-anta">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent>
-              {profile?.role === 'admin' && (
+              {role === 'admin' && (
                 <div className="space-y-2">
                   <Button 
                     onClick={() => setIsCreateMilestoneOpen(true)}
@@ -301,7 +301,7 @@ const ProjectDetailPage = () => {
                   </Button>
                 </div>
               )}
-              {profile?.role === 'intern' && (
+              {role === 'intern' && (
                 <p className="text-sm text-loomero-text/70 text-center">
                   Track your progress through the milestones below
                 </p>
@@ -312,7 +312,7 @@ const ProjectDetailPage = () => {
 
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-loomero-text font-anta">Milestones</h2>
-          {profile?.role === 'admin' && (
+          {role === 'admin' && (
             <Dialog open={isCreateMilestoneOpen} onOpenChange={setIsCreateMilestoneOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -386,7 +386,7 @@ const ProjectDetailPage = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {profile?.role !== 'intern' && (
+                    {role !== 'intern' && (
                       <Badge variant="secondary">
                         {getCompletedCount(milestone.id)}/{getProgressCount(milestone.id)} completed
                       </Badge>
@@ -396,8 +396,8 @@ const ProjectDetailPage = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-loomero-text/80 mb-4">{milestone.description}</p>
-                {profile?.role === 'intern' && (
-                  <Button 
+                {role === 'intern' && (
+                  <Button
                     variant="outline"
                     onClick={() => window.location.href = `/milestones/${milestone.id}`}
                   >
@@ -415,12 +415,12 @@ const ProjectDetailPage = () => {
               <CheckCircle className="h-12 w-12 text-loomero-text/40 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-loomero-text mb-2">No Milestones Yet</h3>
               <p className="text-loomero-text/70 mb-4">
-                {profile?.role === 'admin' 
+                {role === 'admin' 
                   ? "Add milestones to structure this project and track intern progress."
                   : "Milestones will appear here once they are created by administrators."
                 }
               </p>
-              {profile?.role === 'admin' && (
+              {role === 'admin' && (
                 <Button onClick={() => setIsCreateMilestoneOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add First Milestone

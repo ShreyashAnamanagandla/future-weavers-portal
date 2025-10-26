@@ -28,7 +28,7 @@ interface Project {
 }
 
 const ProjectsPage = () => {
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { toast } = useToast();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,7 +127,7 @@ const ProjectsPage = () => {
             </p>
           </div>
           
-          {profile?.role === 'admin' && (
+          {role === 'admin' && (
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="flex items-center space-x-2">
@@ -213,7 +213,7 @@ const ProjectsPage = () => {
                   >
                     View Details
                   </Button>
-                  {profile?.role === 'admin' && (
+                  {role === 'admin' && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon">
@@ -247,12 +247,12 @@ const ProjectsPage = () => {
               <Users className="h-12 w-12 text-loomero-text/40 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-loomero-text mb-2">No Projects Yet</h3>
               <p className="text-loomero-text/70 mb-4">
-                {profile?.role === 'admin' 
+                {role === 'admin' 
                   ? "Create your first project to get started with the internship program."
                   : "Projects will appear here once they are created by administrators."
                 }
               </p>
-              {profile?.role === 'admin' && (
+              {role === 'admin' && (
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create First Project

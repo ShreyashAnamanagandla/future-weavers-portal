@@ -65,7 +65,7 @@ const AnalyticsPage = () => {
         { count: totalBadges },
         { count: completedMilestones },
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'intern'),
+        supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'intern'),
         supabase.from('projects').select('*', { count: 'exact', head: true }),
         supabase.from('user_badges').select('*', { count: 'exact', head: true }),
         supabase.from('progress').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
@@ -126,6 +126,13 @@ const AnalyticsPage = () => {
       }));
 
       // Fetch intern performance
+      const { data: userRolesData } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'intern');
+      
+      const internIds = userRolesData?.map(ur => ur.user_id) || [];
+      
       const { data: internsData } = await supabase
         .from('profiles')
         .select(`
@@ -137,7 +144,7 @@ const AnalyticsPage = () => {
             id
           )
         `)
-        .eq('role', 'intern');
+        .in('id', internIds);
 
       const internPerformance = internsData?.map(intern => ({
         name: intern.full_name || 'Unknown',

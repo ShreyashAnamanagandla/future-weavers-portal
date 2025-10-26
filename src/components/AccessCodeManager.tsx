@@ -29,14 +29,14 @@ const AccessCodeManager = () => {
     role: 'intern' as 'admin' | 'mentor' | 'intern',
   });
   const [isCreating, setIsCreating] = useState(false);
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (role === 'admin') {
       fetchAccessCodes();
     }
-  }, [profile]);
+  }, [role]);
 
   const fetchAccessCodes = async () => {
     try {
@@ -157,7 +157,7 @@ const AccessCodeManager = () => {
     }
   };
 
-  if (profile?.role !== 'admin') {
+  if (role !== 'admin') {
     return null;
   }
 
