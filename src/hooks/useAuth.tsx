@@ -177,42 +177,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     try {
-      // Verify the access code using the database function
+      // Use the NEW secure verification function
       const { data: verificationResult, error: verifyError } = await supabase.rpc(
-        'verify_user_login',
-        { _email: user.email, _access_code: code }
+        'verify_access_code_secure',
+        { _email: user.email, _code: code }
       );
 
-      if (verifyError || !verificationResult || verificationResult.length === 0) {
+      if (verifyError) {
+        console.error('Verification RPC error:', verifyError);
+        toast({
+          title: "Verification Failed",
+          description: verifyError.message || "An error occurred during verification",
+          variant: "destructive",
+        });
+        return { error: verifyError };
+      }
+
+      if (!verificationResult || verificationResult.length === 0) {
         toast({
           title: "Invalid Access Code",
           description: "The access code is invalid or doesn't match your account",
           variant: "destructive",
         });
-        return { error: verifyError || new Error('Invalid access code') };
+        return { error: new Error('Invalid access code - no result') };
       }
 
-      const { role, user_id, full_name } = verificationResult[0];
+      const { success, role: userRole, full_name } = verificationResult[0];
+
+      if (!success) {
+        toast({
+          title: "Invalid Access Code",
+          description: "The access code could not be verified",
+          variant: "destructive",
+        });
+        return { error: new Error('Verification returned false') };
+      }
 
       // Update last login
       await supabase.rpc('update_last_login', { _email: user.email });
 
-      // Create or update profile
+      // Create or update profile (WITHOUT role field)
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           email: user.email,
           full_name: full_name || user.user_metadata?.full_name || user.user_metadata?.name || null,
-          role: role,
           avatar_url: user.user_metadata?.avatar_url || null,
         });
 
       if (profileError) {
+        console.error('Profile upsert error:', profileError);
         return { error: profileError };
       }
 
-      // Fetch the updated profile
+      // Fetch the updated profile and role
       const { data: updatedProfile, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
@@ -229,20 +248,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (roleData) {
           setRole(roleData);
         }
-        
-        setAuthStatus('approved');
       }
+      
+      setAuthStatus('approved');
 
       toast({
-        title: "Welcome Back!",
-        description: `Successfully logged in.`,
+        title: "Welcome!",
+        description: `Successfully verified as ${userRole}.`,
       });
 
       return { error: null, success: true };
     } catch (err) {
+      console.error('Unexpected verification error:', err);
       toast({
         title: "Verification Failed",
-        description: "An error occurred while verifying your access code",
+        description: "An unexpected error occurred while verifying your access code",
         variant: "destructive",
       });
       return { error: err };

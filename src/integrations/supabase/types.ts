@@ -528,10 +528,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_exists: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      admin_exists: { Args: never; Returns: boolean }
       approve_user: {
         Args: {
           _approver_id: string
@@ -543,18 +540,9 @@ export type Database = {
           user_name: string
         }[]
       }
-      generate_access_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_email: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_google_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_access_code: { Args: never; Returns: string }
+      get_current_user_email: { Args: never; Returns: string }
+      get_current_user_google_id: { Args: never; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
@@ -566,14 +554,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_last_login: {
-        Args: { _email: string }
-        Returns: undefined
-      }
-      use_access_code: {
-        Args: { _code_id: string }
-        Returns: boolean
-      }
+      update_last_login: { Args: { _email: string }; Returns: undefined }
+      use_access_code: { Args: { _code_id: string }; Returns: boolean }
       verify_access_code: {
         Args: { _code: string; _email: string }
         Returns: {
